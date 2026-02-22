@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3B82F6;
+  --color-background: #0F172A;
+  --color-secondary: #10B981;
+  --color-card: #1E293B;
+  --color-surface: #334155;
+  --color-emerald: #10b981;
+  --color-muted: #94A3B8;
+  --color-text-primary: #F8FAFC;
+
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
