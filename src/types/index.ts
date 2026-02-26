@@ -25,3 +25,14 @@ export interface WorkoutSummary {
     volumeKg: number;
     durationMinutes: number;
 }
+
+// Blueprint for Chart Data
+export interface ChartData {
+    day: string;
+    volume: number;
+}
+
+// Blueprint for Volume Chart Props
+export interface VolumeChartProps {
+    data: ChartData[];
+}

@@ -1,4 +1,4 @@
-import { LoggedExercise, WorkoutSummary } from "../types";
+import type { LoggedExercise, WorkoutSummary } from "../types";
 
 // Data for the "Volume This Week" Chart
 export const mockChartData = [
