@@ -32,7 +32,26 @@ export interface ChartData {
     volume: number;
 }
 
-// Blueprint for Volume Chart Props
+
+
+
+// ********************PROPS FOR COMPONENTS *****************************//
+
+// Volume Chart Props
 export interface VolumeChartProps {
     data: ChartData[];
+}
+// Set Row Props
+export interface SetRowProps {
+    set: ExerciseSet;
+    onUpdate: (id: string, field: 'weight' | 'reps', value: number | '') => void;
+    onToggleComplete: (id: string) => void;
+}
+
+// Exercise Card Props
+export interface ExerciseCardProps {
+    exercise: LoggedExercise;
+    onUpdateSet: (setId: string, field: 'weight' | 'reps', value: number | '') => void;
+    onToggleSetComplete: (setId: string) => void;
+    onAddSet: (exerciseId: string) => void;
 }

@@ -1,35 +1,88 @@
-import HistoryCard from "./components/HistoryCard";
-import VolumeChart from "./components/VolumeChart"; // <-- New Import
-import { mockRecentWorkouts, mockChartData } from "./data/mockData"; // <-- Added mockChartData
+import { useState } from "react";
+import ExerciseCard from "./components/ExerciseCard";
+import { mockLiveWorkout } from "./data/mockData";
+import type { LoggedExercise, ExerciseSet } from "./types";
 
 export default function App() {
+  // Initialize state with mock data
+  const [activeWorkout, setActiveWorkout] =
+    useState<LoggedExercise[]>(mockLiveWorkout);
+
+  const handleUpdateSet = (
+    setId: string,
+    field: "weight" | "reps",
+    value: number | "",
+  ) => {
+    setActiveWorkout((prevWorkout) =>
+      prevWorkout.map((exercise) => ({
+        ...exercise,
+        sets: exercise.sets.map((set) =>
+          set.id === setId ? { ...set, [field]: value } : set,
+        ),
+      })),
+    );
+  };
+
+  // Toggling the checkmark
+  const handleToggleSetComplete = (setId: string) => {
+    setActiveWorkout((prevWorkout) =>
+      prevWorkout.map((exercise) => ({
+        ...exercise,
+        sets: exercise.sets.map((set) =>
+          set.id === setId
+            ? {
+                ...set,
+                isCompleted: !set.isCompleted,
+              }
+            : set,
+        ),
+      })),
+    );
+  };
+
+  // Adds a new row
+  const handleAddSet = (exerciseId: string) => {
+    setActiveWorkout((prevWorkout) =>
+      prevWorkout.map((exercise) => {
+        if (exercise.id === exerciseId) {
+          const newSetNumber = exercise.sets.length + 1;
+          const newSet: ExerciseSet = {
+            id: `s-new-${Date.now()}`, // Generate a unique ID
+            setNumber: newSetNumber,
+            previousStr: "-", // For empty data
+            weight: "",
+            reps: "",
+            isCompleted: false,
+          };
+          return { ...exercise, sets: [...exercise.sets, newSet] };
+        }
+        return exercise;
+      }),
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-background text-white p-6 pt-12 flex flex-col max-w-md mx-auto">
-      <div className="flex flex-col gap-1 mb-6">
-        <h1 className="text-3xl font-bold text-text-primary">
-          Good Morning, Alex
-        </h1>
-        <p className="text-muted text-sm">
-          🔥 3 Week Streak | 12 Workouts Logged
-        </p>
+    <div className="min-h-screen bg-background text-white p-4 pt-12 flex flex-col gap-6 max-w-md mx-auto">
+      <div className="sticky top-0 bg-background/90 backdrop-blur-md z-10 py-4 flex justify-between items-center border-b border-surface mb-2">
+        <span className="text-muted font-mono text-lg">45:12</span>
+        <h2 className="font-bold text-lg text-text-primary">
+          Upper Body Power
+        </h2>
+        <button className="bg-emerald text-white px-4 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform">
+          Finish
+        </button>
       </div>
 
-      <button className="w-full bg-primary text-white text-lg font-semibold py-4 rounded-xl mb-8 active:scale-95 transition-transform">
-        Start Empty Workout
-      </button>
-
-      {/* 💥 Drop the Chart right here! */}
-      <VolumeChart data={mockChartData} />
-
-      <div>
-        <h2 className="text-xl font-bold mb-4 text-text-primary">
-          Recent Activities
-        </h2>
-        <div className="flex flex-col gap-4">
-          {mockRecentWorkouts.map((workout) => (
-            <HistoryCard key={workout.id} workout={workout} />
-          ))}
-        </div>
+      <div className="flex flex-col gap-6 pb-20">
+        {activeWorkout.map((exercise) => (
+          <ExerciseCard
+            key={exercise.id}
+            exercise={exercise}
+            onUpdateSet={handleUpdateSet}
+            onToggleSetComplete={handleToggleSetComplete}
+            onAddSet={handleAddSet}
+          />
+        ))}
       </div>
     </div>
   );
