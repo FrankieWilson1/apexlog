@@ -1,4 +1,4 @@
-import type { LoggedExercise, WorkoutSummary } from "../types";
+import type { LoggedExercise, WorkoutSummary, ExerciseDefinition } from "../types";
 
 // Data for the "Volume This Week" Chart
 export const mockChartData = [
@@ -57,4 +57,16 @@ export const mockLiveWorkout: LoggedExercise[] = [
       { id: 's5', setNumber: 2, previousStr: '40x9', weight: 40, reps: '', isCompleted: false },
     ]
   }
+];
+
+// The master list of exercises for the Search Modal
+export const exerciseLibrary: ExerciseDefinition[] = [
+  { id: 'ex1', name: 'Barbell Bench Press', muscleGroups: ['Chest', 'Triceps'] },
+  { id: 'ex2', name: 'Incline Dumbbell Press', muscleGroups: ['Chest', 'Shoulders'] },
+  { id: 'ex3', name: 'Tricep Rope Pushdown', muscleGroups: ['Triceps'] },
+  { id: 'ex4', name: 'Overhead Shoulder Press', muscleGroups: ['Shoulders', 'Triceps'] },
+  { id: 'ex5', name: 'Lateral Raises', muscleGroups: ['Shoulders'] },
+  { id: 'ex6', name: 'Pull-ups', muscleGroups: ['Back', 'Biceps'] },
+  { id: 'ex7', name: 'Barbell Squat', muscleGroups: ['Legs', 'Core'] },
+  { id: 'ex8', name: 'Romanian Deadlift', muscleGroups: ['Legs', 'Back'] },
 ];

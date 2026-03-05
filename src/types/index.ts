@@ -32,8 +32,12 @@ export interface ChartData {
     volume: number;
 }
 
-
-
+// Blueprint for an Exercise in the searchable library
+export interface ExerciseDefinition {
+    id: string;
+    name: string;
+    muscleGroups: string[];
+}
 
 // ********************PROPS FOR COMPONENTS *****************************//
 
