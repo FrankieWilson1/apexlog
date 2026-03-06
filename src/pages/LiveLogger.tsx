@@ -1,12 +1,15 @@
 import { useState } from "react";
 import ExerciseCard from "../components/ExerciseCard";
-import ExerciseSearch from "../components/ExerciseSearch"; // <-- Import the new modal
+import ExerciseSearch from "../components/ExerciseSearch";
 import { mockLiveWorkout } from "../data/mockData";
-import type { LoggedExercise, ExerciseSet, ExerciseDefinition } from "../types"; // <-- Import ExerciseDefinition
+import type { LoggedExercise, ExerciseSet, ExerciseDefinition } from "../types";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 export default function LiveLogger() {
-  const [activeWorkout, setActiveWorkout] =
-    useState<LoggedExercise[]>(mockLiveWorkout);
+  const [activeWorkout, setActiveWorkout] = useLocalStorage<LoggedExercise[]>(
+    "appexlog_active_workout",
+    mockLiveWorkout,
+  );
 
   // State to control the Search Modal visibility
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
