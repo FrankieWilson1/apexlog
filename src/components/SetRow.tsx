@@ -5,9 +5,22 @@ export default function SetRow({
   onUpdate,
   onToggleComplete,
 }: SetRowProps) {
+  const isValid =
+    set.weight !== "" &&
+    set.reps !== "" &&
+    Number(set.weight) > 0 &&
+    Number(set.reps) > 0;
+
+  const handleToggle = () => {
+    if (!isValid && !set.isCompleted) return; // block completing invalid set
+    onToggleComplete(set.id);
+  };
+
   return (
     <div
-      className={`grid grid-cols-[40px_1fr_60px_60px_40px] gap-2 items-center py-2 transition-colors duration-300 ${set.isCompleted ? "opacity-50" : ""}`}
+      className={`grid grid-cols-[40px_1fr_60px_60px_40px] gap-2 items-center py-2 transition-colors duration-300 ${
+        set.isCompleted ? "opacity-50" : ""
+      }`}
     >
       {/* Set Number */}
       <span className="text-white font-bold text-center">{set.setNumber}</span>
@@ -29,8 +42,9 @@ export default function SetRow({
           )
         }
         disabled={set.isCompleted}
-        className="bg-surface text-white text-center font-bold rounded-lg h-10 w-full focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-opacity-50 appearance-none"
+        className="bg-surface text-white text-center font-bold rounded-lg h-10 w-full focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 appearance-none"
         placeholder="-"
+        min={0}
       />
 
       {/* Reps Input */}
@@ -45,20 +59,26 @@ export default function SetRow({
           )
         }
         disabled={set.isCompleted}
-        className="bg-surface text-white text-center font-bold rounded-lg h-10 w-full focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-opacity-50 appearance-none"
+        className="bg-surface text-white text-center font-bold rounded-lg h-10 w-full focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 appearance-none"
         placeholder="-"
+        min={0}
       />
 
       {/* Complete Checkmark Button */}
       <button
-        onClick={() => onToggleComplete(set.id)}
+        onClick={handleToggle}
+        disabled={!isValid && !set.isCompleted}
+        title={
+          !isValid && !set.isCompleted ? "Enter weight and reps first" : ""
+        }
         className={`h-10 w-10 rounded-lg flex items-center justify-center transition-colors ${
           set.isCompleted
-            ? "bg-emerald text-white"
-            : "bg-surface text-muted hover:text-white"
+            ? "bg-secondary text-white"
+            : isValid
+              ? "bg-surface text-muted hover:text-white hover:bg-surface/80"
+              : "bg-surface text-surface cursor-not-allowed opacity-40"
         }`}
       >
-        {/* inline SVG for the checkmark */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-5 w-5"
