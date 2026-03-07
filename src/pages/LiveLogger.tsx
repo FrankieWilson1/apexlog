@@ -1,14 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ExerciseCard from "../components/ExerciseCard";
 import ExerciseSearch from "../components/ExerciseSearch";
-import { mockLiveWorkout } from "../data/mockData";
-import type { LoggedExercise, ExerciseSet, ExerciseDefinition } from "../types";
+import { mockLiveWorkouts, mockRecentWorkouts } from "../data/mockData";
+import {
+  type LoggedExercise,
+  type ExerciseSet,
+  type ExerciseDefinition,
+  type WorkoutSummary,
+} from "../types";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 
 export default function LiveLogger() {
+  const navigate = useNavigate();
+
+  // Pulls in the active workout state
   const [activeWorkout, setActiveWorkout] = useLocalStorage<LoggedExercise[]>(
     "appexlog_active_workout",
-    mockLiveWorkout,
+    mockLiveWorkouts,
+  );
+
+  // Pulls in the history state
+  const [workoutHistory, setWorkoutHistory] = useLocalStorage<WorkoutSummary[]>(
+    "apexlog_history",
+    mockRecentWorkouts,
   );
 
   // State to control the Search Modal visibility
@@ -77,24 +92,91 @@ export default function LiveLogger() {
       ],
     };
 
-    // Add it to the bottom of the workout list and close the modal
     setActiveWorkout([...activeWorkout, newLoggedExercise]);
     setIsSearchModalOpen(false);
   };
 
+  // Finishing the Workout
+  const handleFinishWorkout = () => {
+    let totalVolume = 0;
+    activeWorkout.forEach((exercise) => {
+      exercise.sets.forEach((set) => {
+        if (set.isCompleted && set.weight && set.reps) {
+          totalVolume += Number(set.weight) * Number(set.reps);
+        }
+      });
+    });
+
+    const completedWorkout: WorkoutSummary = {
+      id: `wo-${Date.now()}`,
+      title: activeWorkout[0]?.name || "Custom Workout",
+      date: new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      volumeKg: totalVolume,
+      durationMinutes: 45,
+    };
+
+    setWorkoutHistory([completedWorkout, ...workoutHistory]);
+    setActiveWorkout([]);
+    navigate("/dashboard");
+  };
+
+  // Deletes an entire exercise card
+  const handleRemoveExercise = (exercseId: string) => {
+    setActiveWorkout((prevWorkout) =>
+      prevWorkout.filter((ex) => ex.id !== exercseId),
+    );
+  };
+
+  // Removes button set from an exercise
+  // const handleRemoveLastSet = (exerciseId: string) => {
+  //   setActiveWorkout((prevWorkout) =>
+  //     prevWorkout.map((ex) => {
+  //       if (ex.id === exerciseId && ex.sets.length > 0) {
+  //         // Create a new array without the last item
+  //         return { ...ex, sets: ex.sets.slice(0, -1) };
+  //       }
+  //       return ex;
+  //     }),
+  //   );
+  // };
+
+  // Workout Timer
+  const [secondsElapsed, setSecondsElapsed] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondsElapsed(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Formats to 75 seconds into "01:15"
+  const formatTime = (totalSeconds: number) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <div className="min-h-screen bg-background text-white p-4 pt-12 flex flex-col gap-6 max-w-md mx-auto relative">
+    <div className="min-h-screen bg-background text-white p-4 lg:p-10 pt-12 flex flex-col gap-6 mx-auto max-w-7xl relative">
       <div className="sticky top-0 bg-background/90 backdrop-blur-md z-10 py-4 flex justify-between items-center border-b border-surface mb-2">
-        <span className="text-muted font-mono text-lg">45:12</span>
-        <h2 className="font-bold text-lg text-text-primary">
+        <span className="text-muted font-mono text-lg">{formatTime(secondsElapsed)}</span>
+        <h2 className="font-bold text-lg lg:text-2xl text-text-primary">
           Upper Body Power
         </h2>
-        <button className="bg-emerald text-white px-4 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform">
+
+        <button
+          onClick={handleFinishWorkout}
+          className="bg-emerald text-white px-4 lg:px-8 py-1.5 lg:py-2 rounded-lg text-sm lg:text-base font-bold active:scale-95 transition-transform"
+        >
           Finish
         </button>
       </div>
 
-      <div className="flex flex-col gap-6 pb-24">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-24 items-start">
         {activeWorkout.map((exercise) => (
           <ExerciseCard
             key={exercise.id}
@@ -102,12 +184,14 @@ export default function LiveLogger() {
             onUpdateSet={handleUpdateSet}
             onToggleSetComplete={handleToggleSetComplete}
             onAddSet={handleAddSet}
+            onRemoveExercise={handleRemoveExercise}
+            onRemoveLastSet={handleRemoveExercise}
           />
         ))}
 
         <button
           onClick={() => setIsSearchModalOpen(true)}
-          className="w-full border-2 border-dashed border-surface text-primary font-bold py-4 rounded-2xl hover:bg-surface/50 transition-colors"
+          className="w-full border-2 border-dashed border-surface text-primary font-bold py-4 rounded-2xl hover:bg-surface/50 transition-colors h-full min-h-[150px]"
         >
           + Add New Exercise
         </button>

@@ -37,7 +37,7 @@ export const mockRecentWorkouts: WorkoutSummary[] = [
 ];
 
 // Data for the Live Workout Logger screen
-export const mockLiveWorkout: LoggedExercise[] = [
+export const mockLiveWorkouts: LoggedExercise[] = [
   {
     id: 'e1',
     name: 'Barbell Bench Press',

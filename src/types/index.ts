@@ -37,6 +37,13 @@ export interface ExerciseDefinition {
     id: string;
     name: string;
     muscleGroups: string[];
+    secondaryMuscles?: string[];
+    equipment?: string[];
+    description?: string;
+}
+
+export interface LoggedExercise extends ExerciseDefinition {
+    sets: ExerciseSet[];
 }
 
 // ********************PROPS FOR COMPONENTS *****************************//
@@ -58,4 +65,6 @@ export interface ExerciseCardProps {
     onUpdateSet: (setId: string, field: 'weight' | 'reps', value: number | '') => void;
     onToggleSetComplete: (setId: string) => void;
     onAddSet: (exerciseId: string) => void;
+    onRemoveExercise: (exerciseId: string) => void;
+    onRemoveLastSet: (exerciseId: string) => void;
 }
