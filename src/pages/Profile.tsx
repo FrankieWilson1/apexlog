@@ -67,7 +67,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background text-white">
-      <div className="p-6 pt-12 mx-auto max-w-lg">
+      <div className="p-6 pt-6 pb-32 mx-auto max-w-lg lg:pt-28 lg:pb-16">
         {/* HEADER */}
         <div className="flex items-center justify-between mb-10">
           <button

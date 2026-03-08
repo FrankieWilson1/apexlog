@@ -4,8 +4,8 @@ import HistoryCard from "../components/HistoryCard";
 import VolumeChart from "../components/VolumeChart";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import useAuth from "../context/useAuth";
-import { calculateStreak, calculateTotalVolume } from "../utils/WorkoutStats";
 import type { WorkoutSummary } from "../types";
+import { calculateStreak, calculateTotalVolume } from "../utils/WorkoutStats";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -111,7 +111,7 @@ export default function HomeDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-white">
-      <div className="p-6 pt-12 mx-auto max-w-7xl lg:p-10 lg:pt-12">
+      <div className="p-6 pt-6 pb-32 mx-auto max-w-7xl lg:p-10 lg:pt-28 lg:pb-16">
         {/* HEADER */}
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-8">
           <div className="flex items-start justify-between">

@@ -13,6 +13,16 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  background-color: #0F172A;
+  min-height: 100%;
+}
+
 /* Hide number input arrows for a cleaner UI */
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
