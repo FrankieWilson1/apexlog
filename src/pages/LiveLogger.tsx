@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExerciseCard from "../components/ExerciseCard";
 import ExerciseSearch from "../components/ExerciseSearch";
-import { mockLiveWorkouts, mockRecentWorkouts } from "../data/mockData";
+import { mockLiveWorkouts } from "../data/mockData";
 import {
   type LoggedExercise,
   type ExerciseSet,
@@ -10,18 +10,21 @@ import {
   type WorkoutSummary,
 } from "../types";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import useAuth from "../context/useAuth";
 
 export default function LiveLogger() {
   const navigate = useNavigate();
+  const { historyKey } = useAuth();
 
   const [activeWorkout, setActiveWorkout] = useLocalStorage<LoggedExercise[]>(
     "appexlog_active_workout",
     mockLiveWorkouts,
   );
 
+  // Use user-scoped history key — no mock data fallback
   const [workoutHistory, setWorkoutHistory] = useLocalStorage<WorkoutSummary[]>(
-    "apexlog_history",
-    mockRecentWorkouts,
+    historyKey,
+    [],
   );
 
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -32,8 +35,8 @@ export default function LiveLogger() {
     field: "weight" | "reps",
     value: number | "",
   ) => {
-    setActiveWorkout((prevWorkout) =>
-      prevWorkout.map((ex) => ({
+    setActiveWorkout((prev) =>
+      prev.map((ex) => ({
         ...ex,
         sets: ex.sets.map((set) =>
           set.id === setId ? { ...set, [field]: value } : set,
@@ -43,8 +46,8 @@ export default function LiveLogger() {
   };
 
   const handleToggleSetComplete = (setId: string) => {
-    setActiveWorkout((prevWorkout) =>
-      prevWorkout.map((ex) => ({
+    setActiveWorkout((prev) =>
+      prev.map((ex) => ({
         ...ex,
         sets: ex.sets.map((set) =>
           set.id === setId ? { ...set, isCompleted: !set.isCompleted } : set,
@@ -54,8 +57,8 @@ export default function LiveLogger() {
   };
 
   const handleAddSet = (exerciseId: string) => {
-    setActiveWorkout((prevWorkout) =>
-      prevWorkout.map((ex) => {
+    setActiveWorkout((prev) =>
+      prev.map((ex) => {
         if (ex.id === exerciseId) {
           const newSet: ExerciseSet = {
             id: `s-new-${Date.now()}`,
@@ -72,19 +75,7 @@ export default function LiveLogger() {
     );
   };
 
-  const getPreviousPerformance = (exerciseName: string): string => {
-    // Looks through the newest history
-    const lastWorkoutWithExercise = workoutHistory.find(
-      (workoutHistory) => workoutHistory.title === exerciseName,
-    );
-
-    if (!lastWorkoutWithExercise) return "-";
-    return `${lastWorkoutWithExercise.volumeKg / 10}kg x 10`;
-  };
-  
   const handleAddNewExercise = (exerciseDef: ExerciseDefinition) => {
-    const previouseData = getPreviousPerformance(exerciseDef.name);
-
     const newLoggedExercise: LoggedExercise = {
       id: `log-${Date.now()}`,
       name: exerciseDef.name,
@@ -93,7 +84,7 @@ export default function LiveLogger() {
         {
           id: `s-new-${Date.now()}`,
           setNumber: 1,
-          previousStr: previouseData,
+          previousStr: "-",
           weight: "",
           reps: "",
           isCompleted: false,
@@ -105,7 +96,6 @@ export default function LiveLogger() {
   };
 
   const handleFinishWorkout = () => {
-    // Count only completed sets with valid data
     let totalVolume = 0;
     let completedSetCount = 0;
 
@@ -124,7 +114,6 @@ export default function LiveLogger() {
       });
     });
 
-    // Block finish if nothing was actually logged
     if (completedSetCount === 0) {
       alert("Complete at least one set before finishing your workout.");
       return;
@@ -148,15 +137,14 @@ export default function LiveLogger() {
   };
 
   const handleRemoveExercise = (exerciseId: string) => {
-    setActiveWorkout((prevWorkout) =>
-      prevWorkout.filter((ex) => ex.id !== exerciseId),
-    );
+    setActiveWorkout((prev) => prev.filter((ex) => ex.id !== exerciseId));
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSecondsElapsed((prev) => prev + 1);
-    }, 1000);
+    const interval = setInterval(
+      () => setSecondsElapsed((prev) => prev + 1),
+      1000,
+    );
     return () => clearInterval(interval);
   }, []);
 
@@ -168,9 +156,8 @@ export default function LiveLogger() {
 
   return (
     <div className="min-h-screen bg-background text-white">
-      {/* ── STICKY HEADER ── */}
+      {/* STICKY HEADER */}
       <div className="sticky top-0 bg-background/90 backdrop-blur-md z-40 px-4 lg:px-10 py-3 flex justify-between items-center border-b border-surface">
-        {/* Left: close + timer */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -201,12 +188,10 @@ export default function LiveLogger() {
           </span>
         </div>
 
-        {/* Center: workout name */}
         <h2 className="font-bold text-base lg:text-xl text-text-primary tracking-wide uppercase">
           {activeWorkout[0]?.name || "New Workout"}
         </h2>
 
-        {/* Right: Finish button */}
         <button
           onClick={handleFinishWorkout}
           className="bg-secondary text-white px-5 py-2 rounded-full text-sm font-bold active:scale-95 transition-all"
@@ -215,9 +200,8 @@ export default function LiveLogger() {
         </button>
       </div>
 
-      {/* ── CONTENT ── */}
+      {/* CONTENT */}
       <div className="p-4 lg:p-10 mx-auto max-w-7xl">
-        {/* Exercise cards grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           {activeWorkout.map((exercise) => (
             <ExerciseCard
@@ -230,8 +214,6 @@ export default function LiveLogger() {
               onRemoveLastSet={handleRemoveExercise}
             />
           ))}
-
-          {/* Desktop: dashed add card */}
           <button
             onClick={() => setIsSearchModalOpen(true)}
             className="hidden lg:flex items-center justify-center w-full border-2 border-dashed border-surface text-primary font-bold py-4 rounded-2xl hover:bg-surface/30 transition-colors min-h-[150px]"
@@ -239,12 +221,10 @@ export default function LiveLogger() {
             + Add New Exercise
           </button>
         </div>
-
-        {/* Mobile: bottom padding so FAB doesn't cover last card */}
         <div className="h-28 lg:hidden" />
       </div>
 
-      {/* ── MOBILE FIXED BOTTOM BUTTON ── */}
+      {/* MOBILE BOTTOM BUTTON */}
       <div className="fixed bottom-6 left-0 right-0 px-6 z-30 lg:hidden">
         <button
           onClick={() => setIsSearchModalOpen(true)}
@@ -268,7 +248,6 @@ export default function LiveLogger() {
         </button>
       </div>
 
-      {/* ── SEARCH MODAL ── */}
       {isSearchModalOpen && (
         <ExerciseSearch
           onClose={() => setIsSearchModalOpen(false)}

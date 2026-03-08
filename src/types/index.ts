@@ -83,6 +83,7 @@ export interface AuthUser {
 export interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
+  historyKey: string;
   signup: (
     name: string,
     email: string,
