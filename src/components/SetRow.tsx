@@ -12,7 +12,7 @@ export default function SetRow({
     Number(set.reps) > 0;
 
   const handleToggle = () => {
-    if (!isValid && !set.isCompleted) return; // block completing invalid set
+    if (!isValid && !set.isCompleted) return;
     onToggleComplete(set.id);
   };
 
@@ -27,7 +27,7 @@ export default function SetRow({
 
       {/* Previous Log */}
       <span className="text-muted text-sm font-mono truncate">
-        {set.previousStr}
+        {set.previousStr || '-'}
       </span>
 
       {/* Weight Input */}

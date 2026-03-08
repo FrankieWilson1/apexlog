@@ -68,3 +68,30 @@ export interface ExerciseCardProps {
     onRemoveExercise: (exerciseId: string) => void;
     onRemoveLastSet: (exerciseId: string) => void;
 }
+
+// Blueprint for Authcontext
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  goal: string;
+  height: string;
+  weight: string;
+  joinedDate: string;
+}
+
+export interface AuthContextType {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  signup: (
+    name: string,
+    email: string,
+    password: string,
+  ) => { success: boolean; error?: string };
+  login: (
+    email: string,
+    password: string,
+  ) => { success: boolean; error?: string };
+  logout: () => void;
+  updateProfile: (data: Partial<AuthUser>) => void;
+}

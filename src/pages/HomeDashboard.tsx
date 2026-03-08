@@ -1,13 +1,23 @@
 import { useNavigate } from "react-router-dom";
+import { useMemo } from "react";
 import HistoryCard from "../components/HistoryCard";
 import VolumeChart from "../components/VolumeChart";
 import { mockRecentWorkouts } from "../data/mockData";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useAuth } from '../context/Authcontext';
 import type { WorkoutSummary } from "../types";
-import { useMemo } from "react";
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Morning";
+  if (hour < 17) return "Afternoon";
+  return "Evening";
+}
 
 export default function HomeDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [history] = useLocalStorage<WorkoutSummary[]>(
     "apexlog_history",
     mockRecentWorkouts,
@@ -22,34 +32,53 @@ export default function HomeDashboard() {
     }));
   }, [history]);
 
+  const firstName = user?.name?.split(" ")[0] || "Athlete";
+  const greeting = `Good ${getGreeting()}, ${firstName}`;
+
   return (
     <div className="min-h-screen bg-background text-white">
       <div className="p-6 pt-12 mx-auto max-w-7xl lg:p-10 lg:pt-12">
         {/* ── HEADER ── */}
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl lg:text-5xl font-bold text-text-primary mb-1">
-              Good Morning, Alex
-            </h1>
-            <p className="text-muted lg:text-lg">
-              🔥 3 Week Streak | 12 Workouts Logged
-            </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl lg:text-5xl font-bold text-text-primary mb-1">
+                {greeting}
+              </h1>
+              <p className="text-muted lg:text-lg">
+                🔥 3 Week Streak | {history.length} Workouts Logged
+              </p>
+            </div>
+            {/* Profile avatar mobile */}
+            <button
+              onClick={() => navigate("/profile")}
+              className="lg:hidden w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary/30 flex-shrink-0"
+            >
+              {user?.name?.charAt(0).toUpperCase() || "?"}
+            </button>
           </div>
-          <button
-            onClick={() => navigate("/logger")}
-            className="w-full lg:w-auto px-8 bg-primary text-white text-base font-semibold py-4 rounded-xl active:scale-95 transition-transform"
-          >
-            Start Empty Workout
-          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/logger")}
+              className="flex-1 lg:flex-none px-8 bg-primary text-white text-base font-semibold py-4 rounded-xl active:scale-95 transition-transform"
+            >
+              Start Empty Workout
+            </button>
+            {/* Profile avatar desktop */}
+            <button
+              onClick={() => navigate("/profile")}
+              className="hidden lg:flex w-12 h-12 rounded-full bg-primary items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
+            >
+              {user?.name?.charAt(0).toUpperCase() || "?"}
+            </button>
+          </div>
         </div>
 
         {/* ── MOBILE LAYOUT ── */}
         <div className="lg:hidden space-y-8">
-          {/* Chart — VolumeChart handles its own card */}
           <VolumeChart data={dynamicChartData} />
-
-          {/* Recent Activities */}
-          <div className="overflow-y-auto no-scrollbar">
+          <div>
             <h2 className="text-xl font-bold mb-2 text-text-primary">
               Recent Activities
             </h2>
@@ -59,8 +88,6 @@ export default function HomeDashboard() {
               ))}
             </div>
           </div>
-
-          {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-4 pb-8">
             <div className="bg-surface p-5 rounded-2xl border border-white/5">
               <h4 className="text-muted text-xs uppercase font-bold mb-2">
@@ -79,10 +106,8 @@ export default function HomeDashboard() {
 
         {/* ── DESKTOP LAYOUT ── */}
         <div className="hidden lg:grid lg:grid-cols-12 gap-8">
-          {/* LEFT: Chart + Stats */}
           <div className="lg:col-span-8 space-y-8">
             <VolumeChart data={dynamicChartData} />
-
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-surface p-6 rounded-2xl border border-white/5">
                 <h4 className="text-muted text-xs uppercase font-bold mb-2">
@@ -98,14 +123,12 @@ export default function HomeDashboard() {
               </div>
             </div>
           </div>
-
-          {/* RIGHT: Recent Activities sticky */}
           <div className="lg:col-span-4 h-[calc(100vh-200px)] sticky top-24">
             <div className="bg-card/50 p-6 rounded-3xl border border-surface h-full flex flex-col">
               <h2 className="text-xl font-bold mb-2 text-text-primary">
                 Recent Activities
               </h2>
-              <div className="flex-1 overflow-y-auto pr-2 no-scrollbar">
+              <div className="flex-1 overflow-y-auto no-scrollbar">
                 {history.map((workout) => (
                   <HistoryCard key={workout.id} workout={workout} />
                 ))}

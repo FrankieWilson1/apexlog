@@ -72,7 +72,19 @@ export default function LiveLogger() {
     );
   };
 
+  const getPreviousPerformance = (exerciseName: string): string => {
+    // Looks through the newest history
+    const lastWorkoutWithExercise = workoutHistory.find(
+      (workoutHistory) => workoutHistory.title === exerciseName,
+    );
+
+    if (!lastWorkoutWithExercise) return "-";
+    return `${lastWorkoutWithExercise.volumeKg / 10}kg x 10`;
+  };
+  
   const handleAddNewExercise = (exerciseDef: ExerciseDefinition) => {
+    const previouseData = getPreviousPerformance(exerciseDef.name);
+
     const newLoggedExercise: LoggedExercise = {
       id: `log-${Date.now()}`,
       name: exerciseDef.name,
@@ -81,7 +93,7 @@ export default function LiveLogger() {
         {
           id: `s-new-${Date.now()}`,
           setNumber: 1,
-          previousStr: "-",
+          previousStr: previouseData,
           weight: "",
           reps: "",
           isCompleted: false,

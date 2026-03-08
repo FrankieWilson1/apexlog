@@ -4,6 +4,7 @@ import HomeDashboard from "./pages/HomeDashboard";
 import LiveLogger from "./pages/LiveLogger";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
       <Route path="/logger" element={<LiveLogger />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/profile" element={<Profile />} />
     </Routes>
   );
 }
