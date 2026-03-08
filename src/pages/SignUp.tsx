@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
-
 export default function Signup() {
   const navigate = useNavigate();
   const { signup } = useAuth();
@@ -17,7 +16,6 @@ export default function Signup() {
     setError("");
     setIsLoading(true);
 
-    // Small delay for UX feel
     await new Promise((r) => setTimeout(r, 400));
 
     const result = signup(name, email, password);
@@ -28,12 +26,34 @@ export default function Signup() {
       return;
     }
 
-    navigate("/dashboard");
+    // Redirect to login after successful registration
+    navigate("/login");
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm flex flex-col gap-6">
+        {/* Close button */}
+        <button
+          onClick={() => navigate("/")}
+          className="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-muted hover:text-white transition-colors self-start"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
         {/* Logo */}
         <div className="text-center">
           <h1 className="text-2xl font-bold text-text-primary">
@@ -162,6 +182,7 @@ export default function Signup() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               className="w-full bg-transparent border border-surface text-white pl-12 pr-12 py-3.5 rounded-xl focus:border-primary focus:outline-none transition-colors placeholder:text-muted text-sm"
             />
             <button

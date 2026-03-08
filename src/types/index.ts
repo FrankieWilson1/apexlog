@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 
 // Blueprint for a single Set row
 export interface ExerciseSet {
@@ -18,19 +17,6 @@ export interface LoggedExercise {
     sets: ExerciseSet[];
 }
 
-export interface ExerciseSetSnapshot {
-  setNumber: number;
-  previousStr: string;
-  weight: number | "";
-  reps: number | "";
-  isCompleted: boolean;
-}
-
-export interface ExerciseSnapshot {
-  name: string;
-  sets: ExerciseSetSnapshot[];
-}
-
 // Blueprint for a Past Workout
 export interface WorkoutSummary {
     id: string;
@@ -38,7 +24,7 @@ export interface WorkoutSummary {
     date: string;
     volumeKg: number;
     durationMinutes: number;
-    exercises?: ExerciseSnapshot[];
+    exercises?: LoggedExercise[];
 }
 
 // Blueprint for Chart Data
@@ -93,6 +79,7 @@ export interface AuthUser {
   height: string;
   weight: string;
   joinedDate: string;
+  avatar?: string | null;
 }
 
 export interface AuthContextType {

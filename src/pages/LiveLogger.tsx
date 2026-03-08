@@ -125,15 +125,9 @@ export default function LiveLogger() {
 
     const durationMinutes = Math.max(1, Math.round(secondsElapsed / 60));
 
-    const exerciseSnapshots = activeWorkout.map((ex) => ({
-      name: ex.name,
-      sets: ex.sets.map((s) => ({
-        setNumber: s.setNumber,
-        previousStr: s.previousStr,
-        weight: s.weight,
-        reps: s.reps,
-        isCompleted: s.isCompleted,
-      })),
+    const exerciseSnapshots = activeWorkout.map(ex => ({
+      ...ex,
+      sets: ex.sets.map(set => ({ ...set}))
     }));
 
     const completedWorkout: WorkoutSummary = {
