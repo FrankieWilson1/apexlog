@@ -4,6 +4,7 @@ import HistoryCard from "../components/HistoryCard";
 import VolumeChart from "../components/VolumeChart";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import useAuth from "../context/useAuth";
+import { calculateStreak, calculateTotalVolume } from "../utils/WorkoutStats";
 import type { WorkoutSummary } from "../types";
 
 function getGreeting(): string {
@@ -70,37 +71,6 @@ function ActivityList({ history, onNavigate }: ActivityListProps) {
   );
 }
 
-interface StatsCardsProps {
-  history: WorkoutSummary[];
-}
-
-function StatsCards({ history }: StatsCardsProps) {
-  const isEmpty = history.length === 0;
-  const totalVolume = history.reduce((sum, w) => sum + w.volumeKg, 0);
-  return (
-    <div className="grid grid-cols-2 gap-4 pb-8">
-      <div className="bg-surface p-5 rounded-2xl border border-white/5">
-        <h4 className="text-muted text-xs uppercase font-bold mb-2">
-          Top Muscle Group
-        </h4>
-        <p className="text-2xl font-bold text-primary">
-          {isEmpty ? "—" : "Chest"}
-        </p>
-      </div>
-      <div className="bg-surface p-5 rounded-2xl border border-white/5">
-        <h4 className="text-muted text-xs uppercase font-bold mb-2">
-          Total Volume (kg)
-        </h4>
-        <p className="text-2xl font-bold text-emerald-400">
-          {isEmpty ? "—" : totalVolume.toLocaleString()}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ── Main component ──
-
 export default function HomeDashboard() {
   const navigate = useNavigate();
   const { user, historyKey } = useAuth();
@@ -117,6 +87,9 @@ export default function HomeDashboard() {
       }));
   }, [history]);
 
+  const streak = useMemo(() => calculateStreak(history), [history]);
+  const totalVolume = useMemo(() => calculateTotalVolume(history), [history]);
+
   const firstName = user?.name?.split(" ")[0] || "Athlete";
   const greeting = `Good ${getGreeting()}, ${firstName}`;
   const isEmpty = history.length === 0;
@@ -131,6 +104,11 @@ export default function HomeDashboard() {
     <span>{user?.name?.charAt(0).toUpperCase() || "?"}</span>
   );
 
+  const streakLabel =
+    streak > 0
+      ? `🔥 ${streak} Day Streak | ${history.length} Workouts Logged`
+      : "Start your first workout to build your streak!";
+
   return (
     <div className="min-h-screen bg-background text-white">
       <div className="p-6 pt-12 mx-auto max-w-7xl lg:p-10 lg:pt-12">
@@ -141,11 +119,7 @@ export default function HomeDashboard() {
               <h1 className="text-3xl lg:text-5xl font-bold text-text-primary mb-1">
                 {greeting}
               </h1>
-              <p className="text-muted lg:text-lg">
-                {isEmpty
-                  ? "Start your first workout to build your streak!"
-                  : `🔥 3 Week Streak | ${history.length} Workouts Logged`}
-              </p>
+              <p className="text-muted lg:text-lg">{streakLabel}</p>
             </div>
             <button
               onClick={() => navigate("/profile")}
@@ -194,7 +168,24 @@ export default function HomeDashboard() {
               onNavigate={() => navigate("/logger")}
             />
           </div>
-          <StatsCards history={history} />
+          <div className="grid grid-cols-2 gap-4 pb-8">
+            <div className="bg-surface p-5 rounded-2xl border border-white/5">
+              <h4 className="text-muted text-xs uppercase font-bold mb-2">
+                Current Streak
+              </h4>
+              <p className="text-2xl font-bold text-primary">
+                {isEmpty ? "—" : `${streak}d`}
+              </p>
+            </div>
+            <div className="bg-surface p-5 rounded-2xl border border-white/5">
+              <h4 className="text-muted text-xs uppercase font-bold mb-2">
+                Total Volume (kg)
+              </h4>
+              <p className="text-2xl font-bold text-emerald-400">
+                {isEmpty ? "—" : totalVolume.toLocaleString()}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* DESKTOP */}
@@ -215,10 +206,10 @@ export default function HomeDashboard() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-surface p-6 rounded-2xl border border-white/5">
                 <h4 className="text-muted text-xs uppercase font-bold mb-2">
-                  Top Muscle Group
+                  Current Streak
                 </h4>
                 <p className="text-2xl font-bold text-primary">
-                  {isEmpty ? "—" : "Chest"}
+                  {isEmpty ? "—" : `${streak}d`}
                 </p>
               </div>
               <div className="bg-surface p-6 rounded-2xl border border-white/5">
@@ -226,11 +217,7 @@ export default function HomeDashboard() {
                   Total Volume (kg)
                 </h4>
                 <p className="text-2xl font-bold text-emerald-400">
-                  {isEmpty
-                    ? "—"
-                    : history
-                        .reduce((sum, w) => sum + w.volumeKg, 0)
-                        .toLocaleString()}
+                  {isEmpty ? "—" : totalVolume.toLocaleString()}
                 </p>
               </div>
             </div>

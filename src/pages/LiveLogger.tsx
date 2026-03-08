@@ -17,24 +17,32 @@ export default function LiveLogger() {
   const { historyKey } = useAuth();
 
   const [activeWorkout, setActiveWorkout] = useLocalStorage<LoggedExercise[]>(
-    "appexlog_active_workout",
+    "apexlog_active_workout",
     mockLiveWorkouts,
   );
+  const [workoutHistory, setWorkoutHistory] = useLocalStorage<WorkoutSummary[]>(historyKey, []);
 
-  // Use user-scoped history key — no mock data fallback
-  const [workoutHistory, setWorkoutHistory] = useLocalStorage<WorkoutSummary[]>(
-    historyKey,
-    [],
+  // Store startTime in localStorage so timer survives re-renders and hot reloads
+  const [startTime, setStartTime] = useLocalStorage<number>(
+    "apexlog_workout_start",
+    Date.now(),
+  );
+
+  const [secondsElapsed, setSecondsElapsed] = useState(() =>
+    Math.floor((Date.now() - startTime) / 1000)
   );
 
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [secondsElapsed, setSecondsElapsed] = useState(0);
 
-  const handleUpdateSet = (
-    setId: string,
-    field: "weight" | "reps",
-    value: number | "",
-  ) => {
+  // Tick every second, derived from real wall clock
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondsElapsed(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startTime]);
+
+  const handleUpdateSet = (setId: string, field: "weight" | "reps", value: number | "") => {
     setActiveWorkout((prev) =>
       prev.map((ex) => ({
         ...ex,
@@ -80,16 +88,14 @@ export default function LiveLogger() {
       id: `log-${Date.now()}`,
       name: exerciseDef.name,
       muscleGroups: exerciseDef.muscleGroups,
-      sets: [
-        {
-          id: `s-new-${Date.now()}`,
-          setNumber: 1,
-          previousStr: "-",
-          weight: "",
-          reps: "",
-          isCompleted: false,
-        },
-      ],
+      sets: [{
+        id: `s-new-${Date.now()}`,
+        setNumber: 1,
+        previousStr: "-",
+        weight: "",
+        reps: "",
+        isCompleted: false,
+      }],
     };
     setActiveWorkout([...activeWorkout, newLoggedExercise]);
     setIsSearchModalOpen(false);
@@ -103,10 +109,8 @@ export default function LiveLogger() {
       exercise.sets.forEach((set) => {
         if (
           set.isCompleted &&
-          set.weight !== "" &&
-          set.reps !== "" &&
-          Number(set.weight) > 0 &&
-          Number(set.reps) > 0
+          set.weight !== "" && set.reps !== "" &&
+          Number(set.weight) > 0 && Number(set.reps) > 0
         ) {
           totalVolume += Number(set.weight) * Number(set.reps);
           completedSetCount++;
@@ -119,34 +123,47 @@ export default function LiveLogger() {
       return;
     }
 
+    const durationMinutes = Math.max(1, Math.round(secondsElapsed / 60));
+
+    const exerciseSnapshots = activeWorkout.map((ex) => ({
+      name: ex.name,
+      sets: ex.sets.map((s) => ({
+        setNumber: s.setNumber,
+        previousStr: s.previousStr,
+        weight: s.weight,
+        reps: s.reps,
+        isCompleted: s.isCompleted,
+      })),
+    }));
+
     const completedWorkout: WorkoutSummary = {
       id: `wo-${Date.now()}`,
       title: activeWorkout[0]?.name || "Custom Workout",
-      date: new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
       volumeKg: totalVolume,
-      durationMinutes: Math.round(secondsElapsed / 60) || 1,
+      durationMinutes,
+      exercises: exerciseSnapshots,
     };
 
     setWorkoutHistory([completedWorkout, ...workoutHistory]);
+
+    // Clear active workout and reset timer
     setActiveWorkout([]);
-    setSecondsElapsed(0);
+    setStartTime(Date.now());
     navigate("/dashboard");
+  };
+
+  const handleDiscard = () => {
+    if (confirm("Discard workout?")) {
+      setActiveWorkout([]);
+      setStartTime(Date.now());
+      navigate("/dashboard");
+    }
   };
 
   const handleRemoveExercise = (exerciseId: string) => {
     setActiveWorkout((prev) => prev.filter((ex) => ex.id !== exerciseId));
   };
-
-  useEffect(() => {
-    const interval = setInterval(
-      () => setSecondsElapsed((prev) => prev + 1),
-      1000,
-    );
-    return () => clearInterval(interval);
-  }, []);
 
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -156,31 +173,13 @@ export default function LiveLogger() {
 
   return (
     <div className="min-h-screen bg-background text-white">
+
       {/* STICKY HEADER */}
       <div className="sticky top-0 bg-background/90 backdrop-blur-md z-40 px-4 lg:px-10 py-3 flex justify-between items-center border-b border-surface">
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              if (confirm("Discard workout?")) {
-                setActiveWorkout([]);
-                navigate("/dashboard");
-              }
-            }}
-            className="text-muted hover:text-red-400 p-1 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+          <button onClick={handleDiscard} className="text-muted hover:text-red-400 p-1 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
           <span className="text-muted font-mono text-base bg-surface px-3 py-1 rounded-lg">
@@ -230,19 +229,8 @@ export default function LiveLogger() {
           onClick={() => setIsSearchModalOpen(true)}
           className="w-full bg-surface border border-white/10 text-primary font-bold py-4 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Add Exercise
         </button>
