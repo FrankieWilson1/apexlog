@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import useAuth from "../context/useAuth";
-import type { ExerciseSet, LoggedExercise, WorkoutSummary } from "../types";
+import type { WorkoutSummary } from "../types";
 
 export default function WorkoutDetail() {
   const navigate = useNavigate();
@@ -26,16 +26,16 @@ export default function WorkoutDetail() {
   }
 
   const totalSets =
-    workout.exercises?.reduce((sum: number, ex: LoggedExercise) => sum + ex.sets.length, 0) ?? 0;
+    workout.exercises?.reduce((sum, ex) => sum + ex.sets.length, 0) ?? 0;
   const completedSets =
     workout.exercises?.reduce(
-      (sum: number, ex: LoggedExercise) => sum + ex.sets.filter((s) => s.isCompleted).length,
+      (sum, ex) => sum + ex.sets.filter((s) => s.isCompleted).length,
       0,
     ) ?? 0;
 
   return (
     <div className="min-h-screen bg-background text-white">
-      <div className="p-6 pt-12 mx-auto max-w-lg">
+      <div className="p-6 pt-6 pb-32 mx-auto max-w-lg lg:pt-28 lg:pb-16">
         {/* HEADER */}
         <div className="flex items-center gap-4 mb-8">
           <button
@@ -93,7 +93,7 @@ export default function WorkoutDetail() {
             <h2 className="text-lg font-bold text-text-primary">
               Exercise Breakdown
             </h2>
-            {workout.exercises.map((ex: LoggedExercise, i: number) => (
+            {workout.exercises.map((ex, i) => (
               <div
                 key={i}
                 className="bg-card/50 rounded-2xl border border-surface p-5"
@@ -111,7 +111,7 @@ export default function WorkoutDetail() {
                 </div>
 
                 {/* Set rows */}
-                {ex.sets.map((set: ExerciseSet, j: number) => (
+                {ex.sets.map((set, j) => (
                   <div
                     key={j}
                     className={`grid grid-cols-[40px_1fr_60px_60px] gap-2 items-center py-2 border-t border-surface/50 ${

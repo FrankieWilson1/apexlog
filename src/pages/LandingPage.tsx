@@ -1,169 +1,262 @@
-import { motion } from "framer-motion";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
+const FEATURES = [
+  {
+    icon: "📊",
+    title: "Real-Time Analytics",
+    desc: "Visualize your weekly volume and frequency with auto-generated charts.",
+  },
+  {
+    icon: "⚡",
+    title: "Rapid-Fire Logging",
+    desc: "Optimized for the gym floor. Log sets, reps and weight without breaking your flow.",
+  },
+  {
+    icon: "📚",
+    title: "1,000+ Exercises",
+    desc: "Access a massive library of movements with detailed instructions and tracking history.",
+  },
+];
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full overflow-hidden">
-      {/* ================= HERO SECTION ================= */}
-      <div className="relative min-h-[90vh] flex flex-col bg-background text-white">
-        {/* Background Image with Dark Overlay */}
-        <div
-          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop')",
-          }}
-        >
-          <div className="absolute inset-0 bg-background/80 bg-gradient-to-t from-background via-background/60 to-transparent"></div>
-        </div>
+    <div
+      className="min-h-screen text-white"
+      style={{ backgroundColor: "#0F172A" }}
+    >
+      {/* ══════════════════════════════════════
+          HERO — full viewport, gym background
+          Pill navbar floats above this (z-50)
+      ══════════════════════════════════════ */}
+      <section
+        className="relative min-h-screen flex items-end lg:items-center overflow-hidden"
+        style={{
+          /* Gym background image — dark overlay on top */
+          backgroundImage: `
+            linear-gradient(to right, rgba(10,15,28,0.92) 40%, rgba(10,15,28,0.55) 100%),
+            url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1600&q=80&auto=format&fit=crop')
+          `,
+          backgroundSize: "cover",
+          backgroundPosition: "center 20%",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        {/* Content */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-16 pb-20 pt-36 lg:pt-0">
+          <div className="max-w-xl">
+            {/* Badge */}
+            <div
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-6"
+              style={{
+                backgroundColor: "rgba(59,130,246,0.15)",
+                border: "1px solid rgba(59,130,246,0.3)",
+                color: "#3B82F6",
+              }}
+            >
+              🏋️ v2.0 is live
+            </div>
 
-        {/* Navbar */}
-        <nav className="relative z-10 flex justify-between items-center p-6 lg:px-12 max-w-7xl mx-auto w-full border-b border-white/10">
-          <div className="text-2xl font-bold tracking-tighter">
-            Apex<span className="text-primary">Log</span>
-          </div>
-
-          <div className="hidden md:flex gap-8 text-sm font-medium text-white/80">
-            <span className="hover:text-white cursor-pointer transition-colors">
-              Features
-            </span>
-            <span className="hover:text-white cursor-pointer transition-colors">
-              Library
-            </span>
-            <span className="hover:text-white cursor-pointer transition-colors">
-              Pricing
-            </span>
-          </div>
-
-          <button
-            onClick={() => navigate("/login")}
-            className="px-6 py-2 bg-primary/20 border border-primary text-primary font-semibold rounded-full hover:bg-primary hover:text-white transition-all"
-          >
-            Start Training
-          </button>
-        </nav>
-
-        {/* Hero Content */}
-        <div className="relative z-10 flex-1 flex flex-col justify-center px-6 lg:px-12 max-w-7xl mx-auto w-full pt-10 pb-20">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            className="max-w-2xl"
-          >
-            <h1 className="text-5xl lg:text-7xl font-extrabold leading-tight mb-6">
-              Master Your Gains <br /> with Precision <br /> Engineering
+            {/* Headline */}
+            <h1
+              className="font-extrabold text-white leading-[1.05] mb-6"
+              style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)" }}
+            >
+              Master Your Gains
+              <br />
+              with Precision
+              <br />
+              Engineering
             </h1>
-            <p className="text-lg text-white/70 mb-10 max-w-xl leading-relaxed">
+
+            {/* Subtext */}
+            <p
+              className="text-lg mb-10 max-w-md leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.6)" }}
+            >
               The engineering-first workout logger designed to track every set,
               visualize your volume, and master your progress.
             </p>
-            <button
-              onClick={() => navigate("/signup")}
-              className="px-8 py-4 bg-primary text-white font-bold text-lg rounded-full hover:bg-primary/90 transition-transform active:scale-95 shadow-lg shadow-primary/30"
-            >
-              Start Training For Free
-            </button>
-          </motion.div>
+
+            {/* CTAs */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <button
+                onClick={() => navigate("/signup")}
+                className="px-8 py-4 rounded-full font-bold text-base text-white transition-all active:scale-95"
+                style={{
+                  backgroundColor: "#3B82F6",
+                  boxShadow: "0 0 30px rgba(59,130,246,0.4)",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLElement).style.backgroundColor =
+                    "#2563EB")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLElement).style.backgroundColor =
+                    "#3B82F6")
+                }
+              >
+                Start Training For Free
+              </button>
+              <button
+                onClick={() => navigate("/login")}
+                className="px-8 py-4 rounded-full font-bold text-base transition-all"
+                style={{
+                  color: "rgba(255,255,255,0.65)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  backgroundColor: "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.color = "#ffffff";
+                  (e.currentTarget as HTMLElement).style.borderColor =
+                    "rgba(255,255,255,0.35)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.color =
+                    "rgba(255,255,255,0.65)";
+                  (e.currentTarget as HTMLElement).style.borderColor =
+                    "rgba(255,255,255,0.15)";
+                }}
+              >
+                Log In
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* ================= FEATURES SECTION ================= */}
-      {/* Using a very light pink/gray background to match your Figma grid area */}
-      <div className="py-24 bg-[#FFF5F5] text-background px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-4xl font-bold text-center mb-16 text-background"
-          >
-            Engineered For Results
-          </motion.h2>
+        {/* Bottom fade into next section */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+          style={{
+            background: "linear-gradient(to bottom, transparent, #0F172A)",
+          }}
+        />
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Feature 1: Analytics */}
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="bg-card text-white p-8 rounded-3xl flex flex-col items-center text-center shadow-xl border border-surface"
-            >
-              <h3 className="text-xl font-bold mb-3">Real-Time Analytics</h3>
-              <p className="text-muted text-sm mb-8">
-                Visualize your weekly volume and frequency with dynamic,
-                auto-generated charts.
-              </p>
-              {/* Bar Chart Icon Placeholder */}
-              <div className="h-20 w-24 border-b-2 border-l-2 border-surface flex items-end justify-center gap-2 p-2">
-                <div className="w-5 bg-primary h-10 rounded-t-sm"></div>
-                <div className="w-5 bg-primary h-16 rounded-t-sm"></div>
-                <div className="w-5 bg-primary h-8 rounded-t-sm"></div>
-              </div>
-            </motion.div>
+      {/* ══════════════════════════════════════
+          FEATURES — "Engineered For Results"
+      ══════════════════════════════════════ */}
+      <section
+        className="py-24 px-6 lg:px-16"
+        style={{ backgroundColor: "#0F172A" }}
+      >
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-white mb-4">
+              Engineered For Results
+            </h2>
+            <p className="text-lg" style={{ color: "rgba(255,255,255,0.4)" }}>
+              Built for the gym floor. No fluff.
+            </p>
+          </div>
 
-            {/* Feature 2: Logging */}
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="bg-card text-white p-8 rounded-3xl flex flex-col items-center text-center shadow-xl border border-surface"
-            >
-              <h3 className="text-xl font-bold mb-3">Rapid-Fire Logging</h3>
-              <p className="text-muted text-sm mb-8">
-                Designed for the gym floor. Log sets, reps, and RPE in seconds
-                without breaking your flow.
-              </p>
-              {/* List Icon Placeholder */}
-              <div className="h-20 w-24 flex flex-col justify-center gap-3 border-2 border-surface rounded-xl p-3">
-                <div className="h-2 w-full bg-primary/80 rounded"></div>
-                <div className="h-2 w-full bg-primary/80 rounded"></div>
-                <div className="h-2 w-3/4 bg-primary/80 rounded"></div>
-              </div>
-            </motion.div>
-
-            {/* Feature 3: Library */}
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="bg-card text-white p-8 rounded-3xl flex flex-col items-center text-center shadow-xl border border-surface"
-            >
-              <h3 className="text-xl font-bold mb-3">1,000+ Exercises</h3>
-              <p className="text-muted text-sm mb-8">
-                Access a massive library of movements with detailed instructions
-                and tracking history.
-              </p>
-              {/* Search Icon Placeholder */}
-              <div className="h-20 w-24 flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full border-4 border-primary relative">
-                  <div className="absolute -bottom-3 -right-3 w-6 h-4 bg-primary rotate-45 rounded-sm"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {FEATURES.map((f, i) => (
+              <div
+                key={i}
+                className="p-6 rounded-2xl flex flex-col gap-4"
+                style={{
+                  backgroundColor: "#1E293B",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                {/* Icon area matching image 3's card style */}
+                <div
+                  className="w-full aspect-video rounded-xl flex items-center justify-center text-5xl"
+                  style={{ backgroundColor: "rgba(59,130,246,0.1)" }}
+                >
+                  {f.icon}
                 </div>
+                <h3 className="text-base font-bold text-white">{f.title}</h3>
+                <p
+                  className="text-sm leading-relaxed"
+                  style={{ color: "rgba(255,255,255,0.45)" }}
+                >
+                  {f.desc}
+                </p>
               </div>
-            </motion.div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ================= FOOTER CTA SECTION ================= */}
-      <div className="bg-background text-white py-20 px-6 border-t border-surface flex flex-col items-center text-center">
-        <h2 className="text-3xl font-bold mb-8">Ready to Level Up?</h2>
-        <button
-          onClick={() => navigate("/signup")}
-          className="px-10 py-4 bg-primary text-white font-bold text-xl rounded-full hover:bg-primary/90 transition-transform active:scale-95 shadow-lg shadow-primary/20 mb-16"
-        >
-          Get Started For Free
-        </button>
-
-        {/* Footer Nav */}
-        <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center text-sm text-muted pt-8 border-t border-surface/50">
-          <div className="font-bold text-white mb-4 md:mb-0">ApexLog</div>
-          <div className="flex gap-6 mb-4 md:mb-0">
-            <span className="hover:text-white cursor-pointer">Features</span>
-            <span className="hover:text-white cursor-pointer">Library</span>
-            <span className="hover:text-white cursor-pointer">Pricing</span>
-          </div>
-          <div className="flex gap-4">
-            <span>Privacy Policy | Terms of Service</span>
-          </div>
+      {/* ══════════════════════════════════════
+          CTA BANNER — "Ready to Level Up?"
+      ══════════════════════════════════════ */}
+      <section
+        className="py-16 px-6 text-center"
+        style={{ backgroundColor: "#111827" }}
+      >
+        <div className="max-w-xl mx-auto">
+          <h2 className="text-3xl lg:text-4xl font-extrabold text-white mb-6">
+            Ready to Level Up?
+          </h2>
+          <button
+            onClick={() => navigate("/signup")}
+            className="px-10 py-4 rounded-full font-extrabold text-base text-white transition-all active:scale-95"
+            style={{
+              backgroundColor: "#3B82F6",
+              boxShadow: "0 0 30px rgba(59,130,246,0.35)",
+            }}
+            onMouseEnter={(e) =>
+              ((e.currentTarget as HTMLElement).style.backgroundColor =
+                "#2563EB")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.backgroundColor =
+                "#3B82F6")
+            }
+          >
+            Get Started For Free
+          </button>
         </div>
-      </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+          FOOTER — matches image 3
+      ══════════════════════════════════════ */}
+      <footer
+        className="py-8 px-6 lg:px-16 flex flex-col lg:flex-row items-center justify-between gap-4"
+        style={{
+          backgroundColor: "#0F172A",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        <span className="font-bold text-white text-base">
+          Apex<span style={{ color: "#3B82F6" }}>Log</span>
+        </span>
+
+        {/* Footer links */}
+        <div className="flex items-center gap-6">
+          {["Features", "Library", "About"].map((label) => (
+            <button
+              key={label}
+              onClick={() => navigate(`/${label.toLowerCase()}`)}
+              className="text-sm transition-colors"
+              style={{ color: "rgba(255,255,255,0.4)" }}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLElement).style.color = "#ffffff")
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.color =
+                  "rgba(255,255,255,0.4)")
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-4">
+          <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
+            Privacy Policy
+          </span>
+          <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
+            Terms of Service
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }
