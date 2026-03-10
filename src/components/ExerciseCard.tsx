@@ -1,8 +1,54 @@
+/**
+ * @file ExerciseCard.tsx
+ * @description Renders a single exercise card within the Live Logger session.
+ *
+ * Each card displays the exercise name, targeted muscle groups, a column-header
+ * row, all logged sets (via `SetRow`), an "Add Set" button, and a 3-dot context
+ * menu with options to view details, remove the last set, or delete the exercise.
+ *
+ * ## State ownership
+ * This component is intentionally **presentation-only** for workout data — all
+ * mutations (add set, remove exercise, toggle complete) are delegated upward to
+ * `LiveLogger` via props callbacks. The only local state managed here is UI state:
+ * whether the dropdown menu is open, and whether the details modal is open.
+ *
+ * @module components/ExerciseCard
+ */
+
 import { useState } from "react";
 import type { ExerciseCardProps } from "../types";
 import SetRow from "./SetRow";
 import ExerciseDetailsModal from "./ExerciseDetailsModal";
 
+/**
+ * ExerciseCard
+ *
+ * Renders one logged exercise card inside an active workout session, including
+ * its full set table and all interaction controls.
+ *
+ * @param {ExerciseCardProps}  props
+ * @param {LoggedExercise}     props.exercise            - The exercise data to display.
+ * @param {Function}           props.onUpdateSet         - Called when weight or reps changes on a set.
+ *                                                         Signature: `(setId, field, value) => void`
+ * @param {Function}           props.onToggleSetComplete - Called when the checkmark on a set is toggled.
+ *                                                         Signature: `(setId) => void`
+ * @param {Function}           props.onAddSet            - Called when the "Add Set" button is pressed.
+ *                                                         Signature: `(exerciseId) => void`
+ * @param {Function}           props.onRemoveExercise    - Called when "Delete Exercise" is selected.
+ *                                                         Signature: `(exerciseId) => void`
+ * @param {Function}           props.onRemoveLastSet     - Called when "Remove Last Set" is selected.
+ *                                                         Signature: `(exerciseId) => void`
+ *
+ * @example
+ * <ExerciseCard
+ *   exercise={ex}
+ *   onUpdateSet={(setId, field, value) => handleUpdate(ex.id, setId, field, value)}
+ *   onToggleSetComplete={(setId) => handleToggle(ex.id, setId)}
+ *   onAddSet={(exerciseId) => handleAddSet(exerciseId)}
+ *   onRemoveExercise={(exerciseId) => handleRemove(exerciseId)}
+ *   onRemoveLastSet={(exerciseId) => handleRemoveLast(exerciseId)}
+ * />
+ */
 export default function ExerciseCard({
   exercise,
   onUpdateSet,
@@ -11,17 +57,21 @@ export default function ExerciseCard({
   onRemoveExercise,
   onRemoveLastSet,
 }: ExerciseCardProps) {
+  /** Controls visibility of the 3-dot overflow dropdown menu */
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  /** Controls visibility of the full Exercise Details modal */
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   return (
     <div className="bg-card/50 p-5 rounded-3xl border border-surface shadow-lg backdrop-blur-sm flex flex-col gap-3">
-      {/* ── HEADER ── */}
+      {/* ── HEADER: name, muscle groups, 3-dot menu ─────────────────────── */}
       <div className="flex justify-between items-center relative">
         <div>
           <h3 className="text-text-primary tracking-tight font-bold text-xl">
             {exercise.name}
           </h3>
+          {/* Only render muscle group tags if the exercise has them */}
           {exercise.muscleGroups?.length > 0 && (
             <p className="text-muted text-xs mt-0.5">
               {exercise.muscleGroups.join(" · ")}
@@ -29,10 +79,11 @@ export default function ExerciseCard({
           )}
         </div>
 
-        {/* 3-dot menu */}
+        {/* 3-dot overflow menu trigger */}
         <button
           className="text-muted hover:text-white transition-colors active:scale-95 p-1"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label={`Options for ${exercise.name}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -50,14 +101,19 @@ export default function ExerciseCard({
           </svg>
         </button>
 
-        {/* Dropdown */}
+        {/* Dropdown menu — absolutely positioned, layered above other cards */}
         {isMenuOpen && (
           <>
+            {/*
+             * Invisible full-screen backdrop — clicking anywhere outside the
+             * dropdown closes it without requiring an explicit close button.
+             */}
             <div
               className="fixed inset-0 z-10"
               onClick={() => setIsMenuOpen(false)}
             />
             <div className="absolute top-8 right-0 w-48 bg-surface rounded-xl border border-white/10 shadow-xl overflow-hidden z-20">
+              {/* View Details — opens the ExerciseDetailsModal */}
               <button
                 onClick={() => {
                   setIsDetailsOpen(true);
@@ -67,6 +123,8 @@ export default function ExerciseCard({
               >
                 View Details
               </button>
+
+              {/* Remove Last Set — non-destructive, only removes the last row */}
               <button
                 onClick={() => {
                   onRemoveLastSet(exercise.id);
@@ -76,6 +134,8 @@ export default function ExerciseCard({
               >
                 Remove Last Set
               </button>
+
+              {/* Delete Exercise — destructive, styled red to signal danger */}
               <button
                 onClick={() => {
                   onRemoveExercise(exercise.id);
@@ -90,7 +150,7 @@ export default function ExerciseCard({
         )}
       </div>
 
-      {/* ── COLUMN HEADERS ── */}
+      {/* ── COLUMN HEADERS for the set table ────────────────────────────── */}
       <div className="grid grid-cols-[40px_1fr_60px_60px_40px] gap-2 items-center text-xs font-semibold text-muted tracking-wide px-1">
         <span className="text-center">Set</span>
         <span>Previous</span>
@@ -99,7 +159,7 @@ export default function ExerciseCard({
         <span></span>
       </div>
 
-      {/* ── SET ROWS ── */}
+      {/* ── SET ROWS — one SetRow component per logged set ───────────────── */}
       <div className="flex flex-col divide-y divide-surface/50">
         {exercise.sets.map((set) => (
           <SetRow
@@ -111,10 +171,11 @@ export default function ExerciseCard({
         ))}
       </div>
 
-      {/* ── ADD SET BUTTON (matches Figma outlined style) ── */}
+      {/* ── ADD SET — outlined button, positioned at the bottom of the card */}
       <button
         onClick={() => onAddSet(exercise.id)}
         className="mt-1 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-surface text-primary text-sm font-semibold hover:bg-surface/50 active:scale-95 transition-all"
+        aria-label={`Add a set to ${exercise.name}`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -133,6 +194,7 @@ export default function ExerciseCard({
         Add Set
       </button>
 
+      {/* Exercise details modal — only mounted when opened to save memory */}
       {isDetailsOpen && (
         <ExerciseDetailsModal
           exercise={exercise}

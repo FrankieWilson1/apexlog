@@ -1,5 +1,24 @@
+/**
+ * @file FeaturesPage.tsx
+ * @description Full feature showcase and roadmap page for ApexLog.
+ *
+ * Displays all shipped features (v2) in a two-column card grid, each with
+ * an icon, category badge, title, and description. Below the grid, a
+ * roadmap section lists upcoming features with status labels ("planned" /
+ * "future"). The page closes with a CTA card linking to the live logger.
+ *
+ * ## Data
+ * Feature and roadmap data are defined as static arrays (`FEATURES`,
+ * `ROADMAP`) at the top of the file. Each feature card has an accent colour
+ * used for the icon background and badge text. Roadmap items have a
+ * `status` field that drives dot colour and text colour.
+ *
+ * @module pages/FeaturesPage
+ */
+
 import { useNavigate } from "react-router-dom";
 
+/** All shipped v2 features — rendered as a two-column card grid */
 const FEATURES = [
   {
     icon: "⚡",
@@ -67,6 +86,10 @@ const FEATURES = [
   },
 ];
 
+/**
+ * Roadmap item — `status` drives dot and label colour.
+ * "planned" = actively in development pipeline; "future" = on the horizon.
+ */
 const ROADMAP = [
   { label: "Rest Timer", status: "planned" },
   { label: "Personal Records (PRs)", status: "planned" },
@@ -77,13 +100,19 @@ const ROADMAP = [
   { label: "Social / Friends", status: "future" },
 ];
 
+/**
+ * FeaturesPage
+ *
+ * Displays all shipped ApexLog features in a card grid, a roadmap of
+ * upcoming features, and a CTA linking to the live logger.
+ */
 export default function FeaturesPage() {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background text-white">
       <div className="px-6 pt-6 pb-32 mx-auto max-w-4xl lg:px-10 lg:pt-28 lg:pb-16">
-        {/* Header */}
+        {/* ── PAGE HEADER ── */}
         <div className="mb-10 text-center lg:text-left">
           <span className="text-xs font-bold uppercase tracking-widest text-primary bg-primary/10 px-3 py-1 rounded-full">
             v2.0 — Live
@@ -97,7 +126,7 @@ export default function FeaturesPage() {
           </p>
         </div>
 
-        {/* Feature grid */}
+        {/* ── FEATURE CARDS GRID ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-14">
           {FEATURES.map((f, i) => (
             <div
@@ -105,6 +134,7 @@ export default function FeaturesPage() {
               className="bg-card/50 rounded-2xl border border-surface p-6 hover:border-white/20 transition-all"
             >
               <div className="flex items-start gap-4">
+                {/* Icon with accent background */}
                 <div
                   className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
                   style={{
@@ -117,6 +147,7 @@ export default function FeaturesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <h3 className="font-bold text-text-primary">{f.title}</h3>
+                    {/* Category badge */}
                     <span
                       className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
                       style={{
@@ -136,7 +167,7 @@ export default function FeaturesPage() {
           ))}
         </div>
 
-        {/* Roadmap */}
+        {/* ── ROADMAP ── */}
         <div className="mb-14">
           <h2 className="text-2xl font-bold text-text-primary mb-2">
             What's Coming
@@ -150,14 +181,19 @@ export default function FeaturesPage() {
                 key={i}
                 className="flex items-center gap-2 bg-surface/60 border border-surface px-4 py-2 rounded-xl"
               >
+                {/* Status dot — blue for planned, muted for future */}
                 <span
-                  className={`w-2 h-2 rounded-full flex-shrink-0 ${item.status === "planned" ? "bg-primary" : "bg-muted"}`}
+                  className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    item.status === "planned" ? "bg-primary" : "bg-muted"
+                  }`}
                 />
                 <span className="text-sm font-medium text-text-primary">
                   {item.label}
                 </span>
                 <span
-                  className={`text-[10px] font-bold uppercase ${item.status === "planned" ? "text-primary" : "text-muted"}`}
+                  className={`text-[10px] font-bold uppercase ${
+                    item.status === "planned" ? "text-primary" : "text-muted"
+                  }`}
                 >
                   {item.status}
                 </span>
@@ -166,7 +202,7 @@ export default function FeaturesPage() {
           </div>
         </div>
 
-        {/* CTA */}
+        {/* ── CTA CARD ── */}
         <div className="bg-gradient-to-br from-primary/20 to-blue-900/10 rounded-3xl border border-primary/20 p-8 text-center">
           <h3 className="text-2xl font-bold text-text-primary mb-2">
             Ready to train smarter?

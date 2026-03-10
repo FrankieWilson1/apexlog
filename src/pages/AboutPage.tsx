@@ -1,5 +1,26 @@
+/**
+ * @file AboutPage.tsx
+ * @description About page for ApexLog — project info, developer bio, tech stack, version history.
+ *
+ * Static informational page with four sections:
+ * 1. **Hero** — logo icon, tagline, and badge pills (v2.0, Open Source, ALX Capstone).
+ * 2. **Developer** — bio card for Frank Williams Ugwu.
+ * 3. **Tech Stack** — 2×4 grid of technology cards with colour-coded dots.
+ * 4. **Version History** — vertical timeline (v1 → v2 → v3 planned) with dot
+ *    indicators and feature bullet lists.
+ * 5. **Open Source CTA** — closes the page with a dashboard link.
+ *
+ * ## Timeline styling
+ * The timeline uses a single vertical line (`position: absolute; left: 3px`)
+ * with dot elements absolutely positioned at `-left-5`. The current version
+ * dot (`v2.0`) is highlighted in `bg-primary` with a glow shadow.
+ *
+ * @module pages/AboutPage
+ */
+
 import { useNavigate } from "react-router-dom";
 
+/** Tech stack entries — colour dots match each technology's brand colour */
 const STACK = [
   { name: "React 18", role: "UI Framework", color: "#61DAFB" },
   { name: "TypeScript", role: "Type Safety", color: "#3178C6" },
@@ -11,6 +32,7 @@ const STACK = [
   { name: "Vercel", role: "Deployment", color: "#FFFFFF" },
 ];
 
+/** Version timeline — label drives dot and badge styles */
 const TIMELINE = [
   {
     version: "v1.0",
@@ -42,14 +64,21 @@ const TIMELINE = [
   },
 ];
 
+/**
+ * AboutPage
+ *
+ * Static informational page covering the project background, developer bio,
+ * tech stack, version history, and an open-source CTA.
+ */
 export default function AboutPage() {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background text-white">
       <div className="px-6 pt-6 pb-32 mx-auto max-w-3xl lg:px-10 lg:pt-28 lg:pb-16">
-        {/* Hero */}
+        {/* ── HERO ── */}
         <div className="text-center mb-14">
+          {/* "A" logo icon */}
           <div className="w-20 h-20 rounded-3xl bg-primary/20 border border-primary/30 flex items-center justify-center text-4xl font-bold text-primary mx-auto mb-5">
             A
           </div>
@@ -59,6 +88,7 @@ export default function AboutPage() {
             capstone project. Designed for athletes who want clarity on their
             progress.
           </p>
+          {/* Badge pills */}
           <div className="flex items-center justify-center gap-3 mt-5">
             <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1.5 rounded-full border border-primary/20">
               v2.0
@@ -72,8 +102,9 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Developer */}
+        {/* ── DEVELOPER BIO CARD ── */}
         <div className="bg-card/50 rounded-3xl border border-surface p-8 mb-10 text-center">
+          {/* Avatar initial */}
           <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
             F
           </div>
@@ -90,7 +121,7 @@ export default function AboutPage() {
           </p>
         </div>
 
-        {/* Tech Stack */}
+        {/* ── TECH STACK GRID ── */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-text-primary mb-2">
             Tech Stack
@@ -104,6 +135,7 @@ export default function AboutPage() {
                 key={i}
                 className="bg-card/40 rounded-2xl border border-surface p-4 flex flex-col items-center text-center gap-2"
               >
+                {/* Brand colour dot */}
                 <div
                   className="w-2 h-2 rounded-full"
                   style={{ backgroundColor: tech.color }}
@@ -117,18 +149,18 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Version timeline */}
+        {/* ── VERSION TIMELINE ── */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-text-primary mb-6">
             Version History
           </h2>
           <div className="relative pl-8">
-            {/* Vertical line */}
+            {/* Vertical connector line */}
             <div className="absolute left-3 top-2 bottom-2 w-px bg-surface" />
 
             {TIMELINE.map((t, i) => (
               <div key={i} className="relative mb-8 last:mb-0">
-                {/* Dot */}
+                {/* Timeline dot — colour varies by label */}
                 <div
                   className={`absolute -left-5 top-1.5 w-3 h-3 rounded-full border-2 ${
                     t.label === "Current"
@@ -138,6 +170,8 @@ export default function AboutPage() {
                         : "bg-emerald-500 border-emerald-500"
                   }`}
                 />
+
+                {/* Version label + status badge */}
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-text-primary font-bold">
                     {t.version}
@@ -154,6 +188,8 @@ export default function AboutPage() {
                     {t.label}
                   </span>
                 </div>
+
+                {/* Feature bullet list */}
                 <ul className="space-y-1">
                   {t.items.map((item, j) => (
                     <li
@@ -170,7 +206,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Open Source note */}
+        {/* ── OPEN SOURCE CTA ── */}
         <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-900/5 rounded-3xl border border-emerald-500/20 p-8 text-center">
           <h3 className="text-xl font-bold text-text-primary mb-2">
             Open Source

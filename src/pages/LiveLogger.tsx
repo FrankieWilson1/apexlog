@@ -1,3 +1,35 @@
+/**
+ * @file LiveLogger.tsx
+ * @description The active workout session page.
+ *
+ * Manages the full lifecycle of a live workout: a real-time timer,
+ * a list of exercise cards with editable sets, exercise search, and
+ * the ability to finish or discard the session.
+ *
+ * ## Timer design
+ * The timer is wall-clock based — `startTime` (a Unix timestamp) is stored
+ * in `localStorage` so it survives React re-renders, hot reloads, and full
+ * page refreshes. `secondsElapsed` is recalculated every second as
+ * `Date.now() - startTime`, rather than incrementing a counter, ensuring
+ * the timer is always accurate regardless of interval drift.
+ *
+ * ## Finish flow
+ * On finish, the component:
+ * 1. Validates that at least one set was completed.
+ * 2. Calculates total volume (Σ weight × reps for completed sets).
+ * 3. Snapshots all exercise + set data into the `WorkoutSummary`.
+ * 4. Prepends the summary to the user's history in `localStorage`.
+ * 5. Resets active workout and timer, then navigates to `/dashboard`.
+ *
+ * ## State
+ * All persistent state (`activeWorkout`, `workoutHistory`, `startTime`) is
+ * managed via `useLocalStorage` so the session survives a browser refresh.
+ * Ephemeral UI state (`secondsElapsed`, `isSearchModalOpen`) lives in
+ * `useState`.
+ *
+ * @module pages/LiveLogger
+ */
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExerciseCard from "../components/ExerciseCard";
@@ -10,31 +42,54 @@ import {
   type WorkoutSummary,
 } from "../types";
 import { useLocalStorage } from "../hooks/useLocalStorage";
-import useAuth from "../context/useAuth";
+import { useAuth } from "../context/useAuth";
 
+/**
+ * LiveLogger
+ *
+ * The active workout session page. Renders the sticky header with timer
+ * and finish button, a grid of exercise cards, and a fixed mobile "Add
+ * Exercise" button at the bottom.
+ */
 export default function LiveLogger() {
   const navigate = useNavigate();
   const { historyKey } = useAuth();
 
+  /** The in-progress workout — array of exercises with their sets */
   const [activeWorkout, setActiveWorkout] = useLocalStorage<LoggedExercise[]>(
     "apexlog_active_workout",
     mockLiveWorkouts,
   );
+
+  /** The user's saved workout history (prepended to on finish) */
   const [workoutHistory, setWorkoutHistory] = useLocalStorage<WorkoutSummary[]>(
     historyKey,
     [],
   );
 
-  // Persistent wall-clock timer
+  /**
+   * Wall-clock start time stored in localStorage.
+   * Using a timestamp (not a counter) means the timer is always accurate
+   * even if the page is refreshed or the component unmounts and remounts.
+   */
   const [startTime, setStartTime] = useLocalStorage<number>(
     "apexlog_workout_start",
     Date.now(),
   );
+
+  /** Derived seconds elapsed — recalculated from the wall clock every second */
   const [secondsElapsed, setSecondsElapsed] = useState(() =>
     Math.floor((Date.now() - startTime) / 1000),
   );
+
+  /** Controls visibility of the ExerciseSearch modal */
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
+  /**
+   * Timer interval effect.
+   * Recalculates `secondsElapsed` every second by diffing the current time
+   * against `startTime`. Re-runs whenever `startTime` changes (e.g. on reset).
+   */
   useEffect(() => {
     const interval = setInterval(() => {
       setSecondsElapsed(Math.floor((Date.now() - startTime) / 1000));
@@ -42,6 +97,18 @@ export default function LiveLogger() {
     return () => clearInterval(interval);
   }, [startTime]);
 
+  // ── Event handlers ─────────────────────────────────────────────────────────
+
+  /**
+   * handleUpdateSet
+   *
+   * Updates a single field (weight or reps) on a specific set across all
+   * exercises, identified by the set's unique id.
+   *
+   * @param {string}           setId - The set to update.
+   * @param {"weight"|"reps"}  field - Which field to update.
+   * @param {number | ""}      value - The new value ("" represents a cleared input).
+   */
   const handleUpdateSet = (
     setId: string,
     field: "weight" | "reps",
@@ -57,6 +124,13 @@ export default function LiveLogger() {
     );
   };
 
+  /**
+   * handleToggleSetComplete
+   *
+   * Flips the `isCompleted` flag on a specific set, identified by its id.
+   *
+   * @param {string} setId - The id of the set to toggle.
+   */
   const handleToggleSetComplete = (setId: string) => {
     setActiveWorkout((prev) =>
       prev.map((ex) => ({
@@ -68,6 +142,13 @@ export default function LiveLogger() {
     );
   };
 
+  /**
+   * handleAddSet
+   *
+   * Appends a new empty set to a specific exercise, auto-numbering it.
+   *
+   * @param {string} exerciseId - The id of the exercise to add a set to.
+   */
   const handleAddSet = (exerciseId: string) => {
     setActiveWorkout((prev) =>
       prev.map((ex) => {
@@ -85,6 +166,14 @@ export default function LiveLogger() {
     );
   };
 
+  /**
+   * handleAddNewExercise
+   *
+   * Creates a new `LoggedExercise` from an `ExerciseDefinition` selected
+   * in the search modal, appends it to the active workout, and closes the modal.
+   *
+   * @param {ExerciseDefinition} exerciseDef - The exercise selected from search.
+   */
   const handleAddNewExercise = (exerciseDef: ExerciseDefinition) => {
     const newEx: LoggedExercise = {
       id: `log-${Date.now()}`,
@@ -105,6 +194,14 @@ export default function LiveLogger() {
     setIsSearchModalOpen(false);
   };
 
+  /**
+   * handleFinishWorkout
+   *
+   * Validates, calculates, and saves the completed workout to history.
+   * Guards against finishing with zero completed sets. Snapshots the full
+   * exercise/set state into the `WorkoutSummary` for the detail view.
+   * Resets active workout and timer, then navigates to the dashboard.
+   */
   const handleFinishWorkout = () => {
     let totalVolume = 0;
     let completedSetCount = 0;
@@ -131,6 +228,7 @@ export default function LiveLogger() {
 
     const durationMinutes = Math.max(1, Math.round(secondsElapsed / 60));
 
+    // Snapshot the full exercise + set state for the WorkoutDetail view
     const exerciseSnapshots: import("../types").LoggedExercise[] =
       activeWorkout.map((ex) => ({
         id: ex.id,
@@ -164,6 +262,12 @@ export default function LiveLogger() {
     navigate("/dashboard");
   };
 
+  /**
+   * handleDiscard
+   *
+   * Prompts the user for confirmation, then clears the active workout
+   * and resets the timer without saving anything.
+   */
   const handleDiscard = () => {
     if (confirm("Discard this workout?")) {
       setActiveWorkout([]);
@@ -172,10 +276,26 @@ export default function LiveLogger() {
     }
   };
 
+  /**
+   * handleRemoveExercise
+   *
+   * Removes an exercise from the active workout by id.
+   *
+   * @param {string} exerciseId - The id of the exercise to remove.
+   */
   const handleRemoveExercise = (exerciseId: string) => {
     setActiveWorkout((prev) => prev.filter((ex) => ex.id !== exerciseId));
   };
 
+  /**
+   * formatTime
+   *
+   * Formats a raw seconds count as a zero-padded `MM:SS` string for the
+   * timer display.
+   *
+   * @param {number} s - Total seconds elapsed.
+   * @returns {string} e.g. `"04:37"`
+   */
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -187,7 +307,7 @@ export default function LiveLogger() {
       className="min-h-screen"
       style={{ backgroundColor: "#0F172A", color: "#ffffff" }}
     >
-      {/* ── STICKY HEADER — matches Figma image 2 exactly ── */}
+      {/* ── STICKY HEADER: timer pill | workout name | finish pill ── */}
       <div
         className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3"
         style={{
@@ -195,7 +315,7 @@ export default function LiveLogger() {
           borderBottom: "1px solid #334155",
         }}
       >
-        {/* Timer pill */}
+        {/* Timer pill with discard (×) button inside */}
         <div
           className="flex items-center gap-2 px-3 py-2 rounded-full flex-shrink-0"
           style={{ backgroundColor: "#334155" }}
@@ -204,6 +324,7 @@ export default function LiveLogger() {
             onClick={handleDiscard}
             style={{ color: "rgba(255,255,255,0.35)" }}
             className="hover:text-red-400 transition-colors"
+            aria-label="Discard workout"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -228,7 +349,7 @@ export default function LiveLogger() {
           </span>
         </div>
 
-        {/* Workout name — centered */}
+        {/* Workout name — centred, truncated on small screens */}
         <h2 className="flex-1 text-center font-bold text-sm text-white truncate px-2">
           {activeWorkout[0]?.name || "New Workout"}
         </h2>
@@ -243,7 +364,7 @@ export default function LiveLogger() {
         </button>
       </div>
 
-      {/* ── EXERCISE CARDS ── */}
+      {/* ── EXERCISE CARDS GRID ── */}
       <div className="px-3 pt-3 pb-4 lg:px-10 lg:py-8 mx-auto max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-6">
           {activeWorkout.map((exercise) => (
@@ -258,7 +379,7 @@ export default function LiveLogger() {
             />
           ))}
 
-          {/* Desktop add card */}
+          {/* Desktop dashed "Add Exercise" card */}
           <button
             onClick={() => setIsSearchModalOpen(true)}
             className="hidden lg:flex items-center justify-center w-full rounded-2xl font-bold py-8 transition-colors min-h-[160px]"
@@ -278,11 +399,11 @@ export default function LiveLogger() {
           </button>
         </div>
 
-        {/* Mobile spacer above fixed button */}
+        {/* Spacer keeps content above the mobile fixed button */}
         <div className="h-28 lg:hidden" />
       </div>
 
-      {/* ── MOBILE ADD EXERCISE — fixed bottom, matches image 2 style ── */}
+      {/* ── MOBILE FIXED "ADD EXERCISE" BUTTON ── */}
       <div className="fixed bottom-6 left-0 right-0 px-4 z-30 lg:hidden">
         <button
           onClick={() => setIsSearchModalOpen(true)}
@@ -311,6 +432,7 @@ export default function LiveLogger() {
         </button>
       </div>
 
+      {/* Exercise search modal — only mounted when open */}
       {isSearchModalOpen && (
         <ExerciseSearch
           onClose={() => setIsSearchModalOpen(false)}

@@ -1,5 +1,36 @@
+/**
+ * @file LandingPage.tsx
+ * @description Public marketing landing page for ApexLog.
+ *
+ * The entry point at `/` for unauthenticated users. Consists of four sections:
+ *
+ * 1. **Hero** — Full-viewport gym background image (Unsplash) with a dark
+ *    gradient overlay, headline, subtext, and two CTA buttons.
+ * 2. **Features** — Three feature cards on a dark background
+ *    ("Engineered For Results").
+ * 3. **CTA Banner** — Centred "Ready to Level Up?" call to action.
+ * 4. **Footer** — Logo, nav links (Features, Library, About), and
+ *    placeholder policy links.
+ *
+ * ## Background image technique
+ * The hero uses a CSS `background-image` with two layers:
+ * - A directional dark gradient (`rgba(10,15,28,0.92)` → `0.55`) that
+ *   keeps the left side legible for the text block.
+ * - The Unsplash gym photo as the base layer.
+ *
+ * A bottom fade div (`linear-gradient to bottom, transparent → #0F172A`)
+ * blends the hero into the features section without a hard edge.
+ *
+ * ## CTA routing
+ * All buttons use `useNavigate` — no `<a>` tags — so navigation is handled
+ * by React Router without a full page reload.
+ *
+ * @module pages/LandingPage
+ */
+
 import { useNavigate } from "react-router-dom";
 
+/** Feature cards for the "Engineered For Results" section */
 const FEATURES = [
   {
     icon: "📊",
@@ -18,6 +49,13 @@ const FEATURES = [
   },
 ];
 
+/**
+ * LandingPage
+ *
+ * Public marketing page at `/`. Renders the hero, features, CTA banner,
+ * and footer. Unauthenticated users land here; the shared NavBar floats
+ * above the hero (z-50) without being rendered by this component.
+ */
 export default function LandingPage() {
   const navigate = useNavigate();
 
@@ -26,14 +64,12 @@ export default function LandingPage() {
       className="min-h-screen text-white"
       style={{ backgroundColor: "#0F172A" }}
     >
-      {/* ══════════════════════════════════════
-          HERO — full viewport, gym background
-          Pill navbar floats above this (z-50)
-      ══════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════
+          SECTION 1: HERO — full-viewport gym photo
+      ══════════════════════════════════════════ */}
       <section
         className="relative min-h-screen flex items-end lg:items-center overflow-hidden"
         style={{
-          /* Gym background image — dark overlay on top */
           backgroundImage: `
             linear-gradient(to right, rgba(10,15,28,0.92) 40%, rgba(10,15,28,0.55) 100%),
             url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1600&q=80&auto=format&fit=crop')
@@ -43,10 +79,9 @@ export default function LandingPage() {
           backgroundRepeat: "no-repeat",
         }}
       >
-        {/* Content */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-16 pb-20 pt-36 lg:pt-0">
           <div className="max-w-xl">
-            {/* Badge */}
+            {/* "v2.0 is live" badge */}
             <div
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-6"
               style={{
@@ -58,7 +93,7 @@ export default function LandingPage() {
               🏋️ v2.0 is live
             </div>
 
-            {/* Headline */}
+            {/* Headline — fluid font size via clamp */}
             <h1
               className="font-extrabold text-white leading-[1.05] mb-6"
               style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)" }}
@@ -79,7 +114,7 @@ export default function LandingPage() {
               visualize your volume, and master your progress.
             </p>
 
-            {/* CTAs */}
+            {/* CTA buttons */}
             <div className="flex items-center gap-4 flex-wrap">
               <button
                 onClick={() => navigate("/signup")}
@@ -125,7 +160,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Bottom fade into next section */}
+        {/* Bottom fade — blends hero into the features section */}
         <div
           className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
           style={{
@@ -134,9 +169,9 @@ export default function LandingPage() {
         />
       </section>
 
-      {/* ══════════════════════════════════════
-          FEATURES — "Engineered For Results"
-      ══════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════
+          SECTION 2: FEATURES — "Engineered For Results"
+      ══════════════════════════════════════════ */}
       <section
         className="py-24 px-6 lg:px-16"
         style={{ backgroundColor: "#0F172A" }}
@@ -161,7 +196,7 @@ export default function LandingPage() {
                   border: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
-                {/* Icon area matching image 3's card style */}
+                {/* Icon area */}
                 <div
                   className="w-full aspect-video rounded-xl flex items-center justify-center text-5xl"
                   style={{ backgroundColor: "rgba(59,130,246,0.1)" }}
@@ -181,9 +216,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════
-          CTA BANNER — "Ready to Level Up?"
-      ══════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════
+          SECTION 3: CTA BANNER — "Ready to Level Up?"
+      ══════════════════════════════════════════ */}
       <section
         className="py-16 px-6 text-center"
         style={{ backgroundColor: "#111827" }}
@@ -213,9 +248,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════
-          FOOTER — matches image 3
-      ══════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════
+          SECTION 4: FOOTER
+      ══════════════════════════════════════════ */}
       <footer
         className="py-8 px-6 lg:px-16 flex flex-col lg:flex-row items-center justify-between gap-4"
         style={{
@@ -223,11 +258,12 @@ export default function LandingPage() {
           borderTop: "1px solid rgba(255,255,255,0.06)",
         }}
       >
+        {/* Logo */}
         <span className="font-bold text-white text-base">
           Apex<span style={{ color: "#3B82F6" }}>Log</span>
         </span>
 
-        {/* Footer links */}
+        {/* Nav links */}
         <div className="flex items-center gap-6">
           {["Features", "Library", "About"].map((label) => (
             <button
@@ -248,6 +284,7 @@ export default function LandingPage() {
           ))}
         </div>
 
+        {/* Policy links — placeholder, not yet wired */}
         <div className="flex items-center gap-4">
           <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
             Privacy Policy

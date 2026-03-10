@@ -1,6 +1,27 @@
+/**
+ * @file SignUp.tsx
+ * @description New account registration form for ApexLog.
+ *
+ * Collects name, email, and password, validates them via `AuthContext.signup`,
+ * and redirects to `/login` on success so the user explicitly logs in with
+ * their new credentials (rather than being auto-logged in on signup).
+ *
+ * Includes OAuth placeholder buttons (Google/Apple) for future integration,
+ * a password visibility toggle, and Enter-key form submission.
+ *
+ * @module pages/SignUp
+ */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useAuth from "../context/useAuth";
+import { useAuth } from "../context/useAuth";
+
+/**
+ * Signup
+ *
+ * Full-screen registration form. On success, redirects to `/login`
+ * so users explicitly authenticate with their new credentials.
+ */
 export default function Signup() {
   const navigate = useNavigate();
   const { signup } = useAuth();
@@ -12,12 +33,16 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  /**
+   * handleSubmit
+   *
+   * Calls `signup()` with the form values. On success, navigates to `/login`.
+   * A 400ms artificial delay provides visual feedback before redirecting.
+   */
   const handleSubmit = async () => {
     setError("");
     setIsLoading(true);
-
     await new Promise((r) => setTimeout(r, 400));
-
     const result = signup(name, email, password);
     setIsLoading(false);
 
@@ -33,10 +58,11 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm flex flex-col gap-6">
-        {/* Close button */}
+        {/* Back / close button */}
         <button
           onClick={() => navigate("/")}
           className="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-muted hover:text-white transition-colors self-start"
+          aria-label="Back to landing page"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -71,7 +97,7 @@ export default function Signup() {
           </p>
         </div>
 
-        {/* OAuth Buttons */}
+        {/* OAuth placeholders — UI only, not yet functional */}
         <div className="flex flex-col gap-3">
           <button className="w-full flex items-center justify-center gap-3 bg-surface border border-white/10 text-white font-semibold py-3.5 rounded-xl hover:bg-surface/80 active:scale-95 transition-all">
             <img
@@ -94,7 +120,7 @@ export default function Signup() {
           </button>
         </div>
 
-        {/* Divider */}
+        {/* "or" divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-surface" />
           <span className="text-muted text-xs font-semibold uppercase tracking-wider">
@@ -103,7 +129,7 @@ export default function Signup() {
           <div className="flex-1 h-px bg-surface" />
         </div>
 
-        {/* Form */}
+        {/* Email/password form */}
         <div className="flex flex-col gap-3">
           {/* Name */}
           <div className="relative">
@@ -159,7 +185,7 @@ export default function Signup() {
             />
           </div>
 
-          {/* Password */}
+          {/* Password with toggle */}
           <div className="relative">
             <span className="absolute left-4 top-3.5 text-muted">
               <svg
@@ -188,6 +214,7 @@ export default function Signup() {
             <button
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-3.5 text-muted hover:text-white transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
                 <svg

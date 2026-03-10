@@ -1,8 +1,52 @@
+/**
+ * @file Onboarding.tsx
+ * @description First-run onboarding slideshow for new ApexLog users.
+ *
+ * Renders a 5-slide walkthrough covering: welcome, workout logging,
+ * progress tracking, the exercise library, and a final CTA. Each slide
+ * has its own accent colour, emoji icon, headline, and description.
+ * Slides 2 and 3 additionally render numbered step lists.
+ *
+ * ## Navigation
+ * - **Next / Finish** — advances slides; on the last slide writes
+ *   `apexlog_onboarded = "true"` to `localStorage` and navigates to
+ *   `/dashboard`.
+ * - **Back** — retreats one slide; disabled (but not hidden) on slide 1.
+ * - **Skip** — jumps straight to `/dashboard` from any non-last slide,
+ *   also writing the `apexlog_onboarded` key.
+ *
+ * Dot indicators below the card are clickable for direct navigation.
+ *
+ * ## Personalisation
+ * The first slide heading is personalised: if `user.name` is available
+ * (i.e. the user just signed up), it renders "Welcome, {firstName} 👋"
+ * instead of the default slide title.
+ *
+ * @module pages/Onboarding
+ */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useAuth from "../context/useAuth";
+import { useAuth } from "../context/useAuth";
 
-const SLIDES = [
+// ─────────────────────────────────────────────────────────────────────────────
+// Slide data
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Slide definition.
+ * `steps` is optional — only slides 2 and 3 include it.
+ */
+interface Slide {
+  emoji: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  accent: string;
+  steps?: string[];
+}
+
+const SLIDES: Slide[] = [
   {
     emoji: "🏋️",
     title: "Welcome to ApexLog",
@@ -57,6 +101,17 @@ const SLIDES = [
   },
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Onboarding
+ *
+ * Full-screen 5-slide onboarding flow shown once to new users after login.
+ * Writes `apexlog_onboarded` to `localStorage` on completion or skip so the
+ * flow is never shown again.
+ */
 export default function Onboarding() {
   const [current, setCurrent] = useState(0);
   const navigate = useNavigate();
@@ -66,6 +121,12 @@ export default function Onboarding() {
   const isLast = current === SLIDES.length - 1;
   const isFirst = current === 0;
 
+  /**
+   * handleNext
+   *
+   * Advances to the next slide. On the last slide, marks onboarding as
+   * complete and navigates to the dashboard.
+   */
   const handleNext = () => {
     if (isLast) {
       localStorage.setItem("apexlog_onboarded", "true");
@@ -75,10 +136,21 @@ export default function Onboarding() {
     }
   };
 
+  /**
+   * handleBack
+   *
+   * Retreats one slide. No-ops on the first slide.
+   */
   const handleBack = () => {
     if (!isFirst) setCurrent((c) => c - 1);
   };
 
+  /**
+   * handleSkip
+   *
+   * Marks onboarding as complete and navigates to the dashboard immediately.
+   * Available on all slides except the last.
+   */
   const handleSkip = () => {
     localStorage.setItem("apexlog_onboarded", "true");
     navigate("/dashboard");
@@ -89,7 +161,7 @@ export default function Onboarding() {
       className="min-h-screen flex flex-col"
       style={{ backgroundColor: "#0F172A", color: "#ffffff" }}
     >
-      {/* Top bar */}
+      {/* ── TOP BAR: logo + skip ── */}
       <div className="flex items-center justify-between px-6 pt-10 pb-2 flex-shrink-0">
         <span className="text-lg font-bold text-white">
           Apex<span style={{ color: "#3B82F6" }}>Log</span>
@@ -111,9 +183,9 @@ export default function Onboarding() {
         )}
       </div>
 
-      {/* Slide area */}
+      {/* ── SLIDE AREA ── */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-4 max-w-lg mx-auto w-full">
-        {/* Card */}
+        {/* Slide card */}
         <div
           className="w-full rounded-3xl p-8 flex flex-col items-center gap-6 mb-8"
           style={{
@@ -143,6 +215,7 @@ export default function Onboarding() {
               {slide.subtitle}
             </p>
             <h1 className="text-2xl font-bold text-white mb-3 leading-snug">
+              {/* Personalise first slide with the user's first name */}
               {current === 0 && user?.name
                 ? `Welcome, ${user.name.split(" ")[0]} 👋`
                 : slide.title}
@@ -155,7 +228,7 @@ export default function Onboarding() {
             </p>
           </div>
 
-          {/* Steps */}
+          {/* Optional step list — slides 2 and 3 only */}
           {slide.steps && (
             <div className="w-full flex flex-col gap-2">
               {slide.steps.map((step, i) => (
@@ -188,7 +261,7 @@ export default function Onboarding() {
           )}
         </div>
 
-        {/* Dot indicators */}
+        {/* Dot progress indicators — clickable for direct navigation */}
         <div className="flex items-center gap-2 mb-8">
           {SLIDES.map((_, i) => (
             <button
@@ -200,13 +273,14 @@ export default function Onboarding() {
                 height: "8px",
                 backgroundColor: i === current ? slide.accent : "#334155",
               }}
+              aria-label={`Go to slide ${i + 1}`}
             />
           ))}
         </div>
 
-        {/* Back + Next */}
+        {/* Back + Next/Finish row */}
         <div className="flex items-center gap-3 w-full">
-          {/* Back */}
+          {/* Back button — visually dimmed on first slide */}
           <button
             onClick={handleBack}
             disabled={isFirst}
@@ -221,6 +295,7 @@ export default function Onboarding() {
                 : "rgba(255,255,255,0.6)",
               cursor: isFirst ? "not-allowed" : "pointer",
             }}
+            aria-label="Previous slide"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

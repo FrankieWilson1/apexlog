@@ -1,6 +1,38 @@
+/**
+ * @file NavBar.tsx
+ * @description Application-wide navigation bar for ApexLog.
+ *
+ * Renders two distinct navigation layouts depending on viewport size:
+ *
+ * - **Desktop (lg+):** A floating, glassmorphic pill centered at the top of the
+ *   screen. Contains the logo, three centre links (Features, Library, About),
+ *   a Settings gear icon (app pages only), and a "Start Training" CTA button.
+ *
+ * - **Mobile (<lg):** A fixed bottom tab bar with 4 core tabs (Dashboard,
+ *   Features, Library, Profile) and a "More ···" button that opens a smooth
+ *   slide-up sheet containing About and Settings.
+ *
+ * ## Visibility rules
+ * The NavBar is **hidden** on `/login`, `/signup`, `/onboarding`, and `/logger`
+ * — pages that are either full-screen flows or have their own headers.
+ * It renders on `/` (landing page) and all authenticated app pages.
+ *
+ * ## Spacing contract
+ * The NavBar does **not** inject spacer divs. Each page is responsible for
+ * its own top padding (`lg:pt-28`) to clear the floating desktop pill.
+ * On mobile, a single `80px` spacer div clears the bottom tab bar.
+ *
+ * @module components/NavBar
+ */
+
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
+/**
+ * Core tab definitions for the mobile bottom tab bar.
+ * Each entry has a label, route path, and a render function for its icon
+ * that accepts an `active` boolean to switch between filled and outlined styles.
+ */
 const CORE_TABS = [
   {
     label: "Dashboard",
@@ -84,6 +116,11 @@ const CORE_TABS = [
   },
 ];
 
+/**
+ * Secondary navigation items shown in the mobile "More" slide-up sheet
+ * and in the desktop centre links. These are lower-frequency destinations
+ * that don't need a dedicated tab on the bottom bar.
+ */
 const MORE_ITEMS = [
   {
     label: "About",
@@ -132,24 +169,56 @@ const MORE_ITEMS = [
   },
 ];
 
+/**
+ * Centre link definitions for the desktop pill navbar.
+ * Intentionally excludes Dashboard (accessed via the logo) and
+ * Settings (accessed via the gear icon).
+ */
 const DESKTOP_LINKS = [
   { label: "Features", path: "/features" },
   { label: "Library", path: "/library" },
   { label: "About", path: "/about" },
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * NavBar
+ *
+ * Renders the appropriate navigation layout for the current viewport and route.
+ * Returns `null` (no output) on auth/flow pages where a navbar would be intrusive.
+ *
+ * @example
+ * // Placed once in App.tsx, outside all route definitions
+ * <BrowserRouter>
+ *   <NavBar />
+ *   <Routes>...</Routes>
+ * </BrowserRouter>
+ */
 export default function NavBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
+  /** Controls the mobile "More" slide-up sheet visibility */
   const [moreOpen, setMoreOpen] = useState(false);
 
+  // ── Visibility guard ───────────────────────────────────────────────────────
   const hideOn = ["/login", "/signup", "/onboarding", "/logger"];
   if (hideOn.includes(pathname)) return null;
 
+  /** True when the user is on the public landing page */
   const isLanding = pathname === "/";
+
+  /** Returns true if the given path matches the current route exactly */
   const isActive = (path: string) => pathname === path;
+
+  /** True when a "More" item (About/Settings) is the current active route */
   const isMoreActive = MORE_ITEMS.some((i) => i.path === pathname);
 
+  /**
+   * Navigates to a "More" sheet item and closes the sheet.
+   * @param {string} path - The route to navigate to.
+   */
   const handleMoreNav = (path: string) => {
     setMoreOpen(false);
     navigate(path);
@@ -157,10 +226,13 @@ export default function NavBar() {
 
   return (
     <>
-      {/* ══════════════════════════════════════════
-          DESKTOP — floating pill, no layout spacer
-          (spacer is handled per-page via pt- classes)
-      ══════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════════
+          DESKTOP PILL NAV
+          Fixed, centered, frosted-glass pill. Min-width 580px prevents
+          it from collapsing on narrower laptop screens.
+          Inline styles are used instead of Tailwind classes for hover
+          effects to avoid Tailwind v4 purge issues with dynamic values.
+      ══════════════════════════════════════════════════════════════════ */}
       <nav
         className="hidden lg:flex fixed top-5 left-1/2 -translate-x-1/2 z-50 items-center gap-1 px-2 py-2 rounded-full"
         style={{
@@ -173,7 +245,7 @@ export default function NavBar() {
           minWidth: "580px",
         }}
       >
-        {/* Logo */}
+        {/* Logo — navigates to landing on public pages, dashboard on app pages */}
         <button
           onClick={() => navigate(isLanding ? "/" : "/dashboard")}
           className="text-base font-bold text-white px-4 py-1.5 rounded-full transition-colors"
@@ -188,7 +260,7 @@ export default function NavBar() {
           Apex<span style={{ color: "#3B82F6" }}>Log</span>
         </button>
 
-        {/* Divider */}
+        {/* Visual separator between logo and centre links */}
         <div
           style={{
             width: "1px",
@@ -198,7 +270,7 @@ export default function NavBar() {
           }}
         />
 
-        {/* Centre links */}
+        {/* Centre navigation links */}
         <div className="flex items-center gap-1 flex-1 justify-center">
           {DESKTOP_LINKS.map((item) => {
             const active = isActive(item.path);
@@ -235,8 +307,9 @@ export default function NavBar() {
           })}
         </div>
 
-        {/* Right: gear + CTA */}
+        {/* Right side: Settings gear (app pages only) + CTA */}
         <div className="flex items-center gap-2">
+          {/* Settings gear — hidden on landing page, shown on all app pages */}
           {!isLanding && (
             <button
               onClick={() => navigate("/settings")}
@@ -286,6 +359,7 @@ export default function NavBar() {
             </button>
           )}
 
+          {/* Primary CTA — "Sign up" on landing, "Start workout" on app pages */}
           <button
             onClick={() => navigate(isLanding ? "/signup" : "/logger")}
             className="px-5 py-2 rounded-full text-sm font-bold text-white transition-all active:scale-95"
@@ -304,14 +378,14 @@ export default function NavBar() {
         </div>
       </nav>
 
-      {/* ══════════════════════════════════════════
-          MOBILE — 4 core tabs + "More" (···)
-          No white gap because we don't inject
-          any spacer div here at all.
-      ══════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════════
+          MOBILE BOTTOM NAV + MORE SHEET
+          Hidden on the landing page (isLanding check). The landing page
+          has its own inline CTA buttons that serve the same purpose.
+      ══════════════════════════════════════════════════════════════════ */}
       {!isLanding && (
         <>
-          {/* More menu backdrop */}
+          {/* Semi-transparent backdrop — closes the More sheet on outside tap */}
           {moreOpen && (
             <div
               className="lg:hidden fixed inset-0 z-40"
@@ -323,7 +397,11 @@ export default function NavBar() {
             />
           )}
 
-          {/* More slide-up sheet */}
+          {/*
+           * More slide-up sheet
+           * Animates in/out using CSS `bottom` transition.
+           * `pointerEvents: none` when hidden prevents accidental taps on invisible buttons.
+           */}
           <div
             className="lg:hidden fixed left-4 right-4 z-50 rounded-2xl overflow-hidden transition-all duration-300"
             style={{
@@ -373,6 +451,7 @@ export default function NavBar() {
                   {item.icon}
                 </span>
                 <span className="font-semibold text-sm">{item.label}</span>
+                {/* Blue dot indicator for the currently active route */}
                 {isActive(item.path) && (
                   <span
                     className="ml-auto w-2 h-2 rounded-full"
@@ -383,7 +462,7 @@ export default function NavBar() {
             ))}
           </div>
 
-          {/* Bottom tab bar — 4 tabs + More */}
+          {/* Bottom tab bar — 4 core tabs + More trigger */}
           <nav
             className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 pt-2 pb-5"
             style={{
@@ -419,7 +498,7 @@ export default function NavBar() {
               );
             })}
 
-            {/* More button */}
+            {/* More ··· button — highlighted when a More-sheet route is active */}
             <button
               onClick={() => setMoreOpen(!moreOpen)}
               className="flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all"
@@ -444,7 +523,7 @@ export default function NavBar() {
             </button>
           </nav>
 
-          {/* Single bottom spacer so page content clears the tab bar */}
+          {/* Bottom spacer — ensures page content scrolls above the tab bar */}
           <div className="lg:hidden" style={{ height: "80px" }} />
         </>
       )}
