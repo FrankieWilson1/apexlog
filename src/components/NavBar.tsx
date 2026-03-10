@@ -28,11 +28,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-/**
- * Core tab definitions for the mobile bottom tab bar.
- * Each entry has a label, route path, and a render function for its icon
- * that accepts an `active` boolean to switch between filled and outlined styles.
- */
 const CORE_TABS = [
   {
     label: "Dashboard",
@@ -116,11 +111,6 @@ const CORE_TABS = [
   },
 ];
 
-/**
- * Secondary navigation items shown in the mobile "More" slide-up sheet
- * and in the desktop centre links. These are lower-frequency destinations
- * that don't need a dedicated tab on the bottom bar.
- */
 const MORE_ITEMS = [
   {
     label: "About",
@@ -169,56 +159,24 @@ const MORE_ITEMS = [
   },
 ];
 
-/**
- * Centre link definitions for the desktop pill navbar.
- * Intentionally excludes Dashboard (accessed via the logo) and
- * Settings (accessed via the gear icon).
- */
 const DESKTOP_LINKS = [
   { label: "Features", path: "/features" },
   { label: "Library", path: "/library" },
   { label: "About", path: "/about" },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * NavBar
- *
- * Renders the appropriate navigation layout for the current viewport and route.
- * Returns `null` (no output) on auth/flow pages where a navbar would be intrusive.
- *
- * @example
- * // Placed once in App.tsx, outside all route definitions
- * <BrowserRouter>
- *   <NavBar />
- *   <Routes>...</Routes>
- * </BrowserRouter>
- */
 export default function NavBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-
-  /** Controls the mobile "More" slide-up sheet visibility */
   const [moreOpen, setMoreOpen] = useState(false);
 
-  // ── Visibility guard ───────────────────────────────────────────────────────
   const hideOn = ["/login", "/signup", "/onboarding", "/logger"];
   if (hideOn.includes(pathname)) return null;
 
-  /** True when the user is on the public landing page */
   const isLanding = pathname === "/";
-
-  /** Returns true if the given path matches the current route exactly */
   const isActive = (path: string) => pathname === path;
-
-  /** True when a "More" item (About/Settings) is the current active route */
   const isMoreActive = MORE_ITEMS.some((i) => i.path === pathname);
 
-  /**
-   * Navigates to a "More" sheet item and closes the sheet.
-   * @param {string} path - The route to navigate to.
-   */
   const handleMoreNav = (path: string) => {
     setMoreOpen(false);
     navigate(path);
@@ -228,13 +186,14 @@ export default function NavBar() {
     <>
       {/* ══════════════════════════════════════════════════════════════════
           DESKTOP PILL NAV
-          Fixed, centered, frosted-glass pill. Min-width 580px prevents
-          it from collapsing on narrower laptop screens.
-          Inline styles are used instead of Tailwind classes for hover
-          effects to avoid Tailwind v4 purge issues with dynamic values.
+          FIX: Removed hard minWidth. Pill now auto-sizes to its content.
+          Tightened internal gaps (gap-0.5, px-3) so it breathes at
+          all laptop widths (1024px+) without items cramping together.
+          A second separator was added between the links and right side
+          to give clearer visual grouping at smaller viewports.
       ══════════════════════════════════════════════════════════════════ */}
       <nav
-        className="hidden lg:flex fixed top-5 left-1/2 -translate-x-1/2 z-50 items-center gap-1 px-2 py-2 rounded-full"
+        className="hidden lg:flex fixed top-5 left-1/2 -translate-x-1/2 z-50 items-center px-2 py-1.5 rounded-full"
         style={{
           backgroundColor: "rgba(15,23,42,0.98)",
           border: "1px solid rgba(255,255,255,0.1)",
@@ -242,14 +201,14 @@ export default function NavBar() {
           WebkitBackdropFilter: "blur(24px)",
           boxShadow:
             "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
-          minWidth: "580px",
+          whiteSpace: "nowrap",
+          gap: "2px",
         }}
       >
-        {/* Logo — navigates to landing on public pages, dashboard on app pages */}
+        {/* ── Logo ── */}
         <button
           onClick={() => navigate(isLanding ? "/" : "/dashboard")}
-          className="text-base font-bold text-white px-4 py-1.5 rounded-full transition-colors"
-          style={{ color: "#ffffff" }}
+          className="text-sm font-bold text-white px-3 py-2 rounded-full transition-colors flex-shrink-0"
           onMouseEnter={(e) =>
             (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)")
           }
@@ -260,56 +219,65 @@ export default function NavBar() {
           Apex<span style={{ color: "#3B82F6" }}>Log</span>
         </button>
 
-        {/* Visual separator between logo and centre links */}
+        {/* Separator */}
         <div
           style={{
             width: "1px",
-            height: "20px",
+            height: "18px",
             backgroundColor: "rgba(255,255,255,0.1)",
             margin: "0 4px",
+            flexShrink: 0,
           }}
         />
 
-        {/* Centre navigation links */}
-        <div className="flex items-center gap-1 flex-1 justify-center">
-          {DESKTOP_LINKS.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-                style={{
-                  color: active ? "#ffffff" : "rgba(255,255,255,0.5)",
-                  backgroundColor: active
-                    ? "rgba(255,255,255,0.1)"
-                    : "transparent",
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    (e.currentTarget as HTMLElement).style.color = "#ffffff";
-                    (e.currentTarget as HTMLElement).style.backgroundColor =
-                      "rgba(255,255,255,0.05)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    (e.currentTarget as HTMLElement).style.color =
-                      "rgba(255,255,255,0.5)";
-                    (e.currentTarget as HTMLElement).style.backgroundColor =
-                      "transparent";
-                  }
-                }}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
+        {/* ── Centre links ── */}
+        {DESKTOP_LINKS.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className="px-3 py-2 rounded-full text-sm font-medium transition-all flex-shrink-0"
+              style={{
+                color: active ? "#ffffff" : "rgba(255,255,255,0.5)",
+                backgroundColor: active
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.color = "#ffffff";
+                  (e.currentTarget as HTMLElement).style.backgroundColor =
+                    "rgba(255,255,255,0.05)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.color =
+                    "rgba(255,255,255,0.5)";
+                  (e.currentTarget as HTMLElement).style.backgroundColor =
+                    "transparent";
+                }
+              }}
+            >
+              {item.label}
+            </button>
+          );
+        })}
 
-        {/* Right side: Settings gear (app pages only) + CTA */}
-        <div className="flex items-center gap-2">
-          {/* Settings gear — hidden on landing page, shown on all app pages */}
+        {/* Separator */}
+        <div
+          style={{
+            width: "1px",
+            height: "18px",
+            backgroundColor: "rgba(255,255,255,0.1)",
+            margin: "0 4px",
+            flexShrink: 0,
+          }}
+        />
+
+        {/* ── Right side: Settings gear + CTA ── */}
+        <div className="flex items-center gap-1 flex-shrink-0">
           {!isLanding && (
             <button
               onClick={() => navigate("/settings")}
@@ -359,10 +327,9 @@ export default function NavBar() {
             </button>
           )}
 
-          {/* Primary CTA — "Sign up" on landing, "Start workout" on app pages */}
           <button
             onClick={() => navigate(isLanding ? "/signup" : "/logger")}
-            className="px-5 py-2 rounded-full text-sm font-bold text-white transition-all active:scale-95"
+            className="px-4 py-2 rounded-full text-sm font-bold text-white transition-all active:scale-95 flex-shrink-0"
             style={{ backgroundColor: "#3B82F6" }}
             onMouseEnter={(e) =>
               ((e.currentTarget as HTMLElement).style.backgroundColor =
@@ -379,13 +346,10 @@ export default function NavBar() {
       </nav>
 
       {/* ══════════════════════════════════════════════════════════════════
-          MOBILE BOTTOM NAV + MORE SHEET
-          Hidden on the landing page (isLanding check). The landing page
-          has its own inline CTA buttons that serve the same purpose.
+          MOBILE BOTTOM NAV + MORE SHEET (unchanged)
       ══════════════════════════════════════════════════════════════════ */}
       {!isLanding && (
         <>
-          {/* Semi-transparent backdrop — closes the More sheet on outside tap */}
           {moreOpen && (
             <div
               className="lg:hidden fixed inset-0 z-40"
@@ -397,11 +361,6 @@ export default function NavBar() {
             />
           )}
 
-          {/*
-           * More slide-up sheet
-           * Animates in/out using CSS `bottom` transition.
-           * `pointerEvents: none` when hidden prevents accidental taps on invisible buttons.
-           */}
           <div
             className="lg:hidden fixed left-4 right-4 z-50 rounded-2xl overflow-hidden transition-all duration-300"
             style={{
@@ -451,7 +410,6 @@ export default function NavBar() {
                   {item.icon}
                 </span>
                 <span className="font-semibold text-sm">{item.label}</span>
-                {/* Blue dot indicator for the currently active route */}
                 {isActive(item.path) && (
                   <span
                     className="ml-auto w-2 h-2 rounded-full"
@@ -462,7 +420,6 @@ export default function NavBar() {
             ))}
           </div>
 
-          {/* Bottom tab bar — 4 core tabs + More trigger */}
           <nav
             className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 pt-2 pb-5"
             style={{
@@ -498,7 +455,6 @@ export default function NavBar() {
               );
             })}
 
-            {/* More ··· button — highlighted when a More-sheet route is active */}
             <button
               onClick={() => setMoreOpen(!moreOpen)}
               className="flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all"
@@ -523,7 +479,6 @@ export default function NavBar() {
             </button>
           </nav>
 
-          {/* Bottom spacer — ensures page content scrolls above the tab bar */}
           <div className="lg:hidden" style={{ height: "80px" }} />
         </>
       )}

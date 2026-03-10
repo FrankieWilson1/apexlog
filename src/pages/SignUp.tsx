@@ -4,7 +4,7 @@
  *
  * Collects name, email, and password, validates them via `AuthContext.signup`,
  * and redirects to `/login` on success so the user explicitly logs in with
- * their new credentials (rather than being auto-logged in on signup).
+ * their new credentials.
  *
  * Includes OAuth placeholder buttons (Google/Apple) for future integration,
  * a password visibility toggle, and Enter-key form submission.
@@ -37,7 +37,6 @@ export default function Signup() {
    * handleSubmit
    *
    * Calls `signup()` with the form values. On success, navigates to `/login`.
-   * A 400ms artificial delay provides visual feedback before redirecting.
    */
   const handleSubmit = async () => {
     setError("");
@@ -51,22 +50,31 @@ export default function Signup() {
       return;
     }
 
-    // Redirect to login after successful registration
     navigate("/login");
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm flex flex-col gap-6">
-        {/* Back / close button */}
+        {/* ── CLOSE BUTTON — pill with border, left-aligned (matches design) ── */}
         <button
           onClick={() => navigate("/")}
-          className="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-muted hover:text-white transition-colors self-start"
+          className="self-start flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-muted hover:text-white transition-colors"
+          style={{
+            border: "1.5px solid rgba(255,255,255,0.15)",
+            backgroundColor: "transparent",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)")
+          }
           aria-label="Back to landing page"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
+            className="h-3.5 w-3.5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -74,7 +82,7 @@ export default function Signup() {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
+              strokeWidth={2.5}
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
@@ -97,7 +105,7 @@ export default function Signup() {
           </p>
         </div>
 
-        {/* OAuth placeholders — UI only, not yet functional */}
+        {/* OAuth placeholders */}
         <div className="flex flex-col gap-3">
           <button className="w-full flex items-center justify-center gap-3 bg-surface border border-white/10 text-white font-semibold py-3.5 rounded-xl hover:bg-surface/80 active:scale-95 transition-all">
             <img
@@ -120,7 +128,7 @@ export default function Signup() {
           </button>
         </div>
 
-        {/* "or" divider */}
+        {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-surface" />
           <span className="text-muted text-xs font-semibold uppercase tracking-wider">
@@ -129,7 +137,7 @@ export default function Signup() {
           <div className="flex-1 h-px bg-surface" />
         </div>
 
-        {/* Email/password form */}
+        {/* Form */}
         <div className="flex flex-col gap-3">
           {/* Name */}
           <div className="relative">
@@ -185,7 +193,7 @@ export default function Signup() {
             />
           </div>
 
-          {/* Password with toggle */}
+          {/* Password */}
           <div className="relative">
             <span className="absolute left-4 top-3.5 text-muted">
               <svg

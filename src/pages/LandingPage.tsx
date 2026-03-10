@@ -79,7 +79,7 @@ export default function LandingPage() {
           backgroundRepeat: "no-repeat",
         }}
       >
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-16 pb-20 pt-36 lg:pt-0">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-16 pb-20 pt-36 lg:pt-0 mt-10">
           <div className="max-w-xl">
             {/* "v2.0 is live" badge */}
             <div
