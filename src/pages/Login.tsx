@@ -1,7 +1,30 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// LOGIN PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * @file Login.tsx
+ * @description Email/password login form for ApexLog.
+ *
+ * Validates credentials against the `AuthContext`, simulates a short loading
+ * delay for UX feedback, and routes the user based on onboarding status:
+ * - First-time users (no `apexlog_onboarded` key) → `/onboarding`
+ * - Returning users → `/dashboard`
+ *
+ * Also supports password visibility toggle and Enter-key submission.
+ *
+ * @module pages/Login
+ */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useAuth from "../context/useAuth";
+import { useAuth } from "../context/useAuth";
 
+/**
+ * Login
+ *
+ * Full-screen centred login form. On success, checks localStorage for the
+ * `apexlog_onboarded` key to decide whether to show onboarding first.
+ */
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -12,6 +35,12 @@ export default function Login() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  /**
+   * handleSubmit
+   *
+   * Validates inputs, calls `login()`, and routes based on onboarding status.
+   * A 400ms artificial delay gives users visual feedback before navigating.
+   */
   const handleSubmit = async () => {
     setError("");
     setIsLoading(true);
@@ -24,7 +53,7 @@ export default function Login() {
       return;
     }
 
-    // First-time user → onboarding. Returning user → dashboard.
+    // Route first-time users through onboarding; returning users go straight to dashboard
     const hasOnboarded = localStorage.getItem("apexlog_onboarded");
     navigate(hasOnboarded ? "/dashboard" : "/onboarding");
   };
@@ -32,9 +61,11 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm flex flex-col gap-6">
+        {/* Back / close button */}
         <button
           onClick={() => navigate("/")}
           className="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-muted hover:text-white transition-colors self-start"
+          aria-label="Back to landing page"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -52,12 +83,14 @@ export default function Login() {
           </svg>
         </button>
 
+        {/* Logo */}
         <div className="text-center">
           <h1 className="text-2xl font-bold text-text-primary">
             Apex<span className="text-primary">Log</span>
           </h1>
         </div>
 
+        {/* Headline */}
         <div className="text-center">
           <h2 className="text-2xl font-bold text-text-primary mb-2">
             Welcome Back
@@ -65,7 +98,9 @@ export default function Login() {
           <p className="text-muted text-sm">Log in to continue your streak.</p>
         </div>
 
+        {/* Form inputs */}
         <div className="flex flex-col gap-3">
+          {/* Email */}
           <div className="relative">
             <span className="absolute left-4 top-3.5 text-muted">
               <svg
@@ -92,6 +127,7 @@ export default function Login() {
             />
           </div>
 
+          {/* Password with visibility toggle */}
           <div className="relative">
             <span className="absolute left-4 top-3.5 text-muted">
               <svg
@@ -120,6 +156,7 @@ export default function Login() {
             <button
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-3.5 text-muted hover:text-white transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
                 <svg
@@ -161,12 +198,14 @@ export default function Login() {
             </button>
           </div>
 
+          {/* Inline error message */}
           {error && (
             <p className="text-red-400 text-sm text-center bg-red-400/10 py-2 px-4 rounded-xl">
               {error}
             </p>
           )}
 
+          {/* Submit button — shows spinner while loading */}
           <button
             onClick={handleSubmit}
             disabled={isLoading}
@@ -183,6 +222,7 @@ export default function Login() {
           </button>
         </div>
 
+        {/* Switch to signup */}
         <p className="text-center text-muted text-sm">
           Don't have an account?{" "}
           <button

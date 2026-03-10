@@ -1,6 +1,40 @@
+/**
+ * @file LibraryPage.tsx
+ * @description Browsable exercise library page powered by the WGER API.
+ *
+ * Fetches up to 100 English-language exercises from the WGER open fitness
+ * API on first mount, caches the result in `sessionStorage` for the
+ * duration of the browser session, and presents them in a searchable,
+ * filterable accordion list.
+ *
+ * ## Data flow
+ * 1. On mount, check `sessionStorage` for `apexlog_library_cache`.
+ * 2. Cache hit → parse and hydrate state immediately (no network request).
+ * 3. Cache miss → fetch from WGER, map the raw payload to `WgerExercise[]`,
+ *    cache the result, then hydrate state.
+ *
+ * ## Filtering
+ * Two independent filter mechanisms, applied together via a `useEffect`:
+ * - **Filter chips** — map to `ex.category` or `ex.muscles` substring match.
+ * - **Search input** — matches `ex.name` case-insensitively.
+ *
+ * ## Accordion
+ * Each exercise row is a button that toggles its description + muscle tags
+ * panel open/closed. Only one row is open at a time (`expanded` holds the
+ * id of the currently open row, or `null`).
+ *
+ * ## Colour coding
+ * Each exercise is colour-coded by category via `MUSCLE_COLORS`. The colour
+ * is used for the left accent bar, muscle tag backgrounds, and the category
+ * label in the collapsed row.
+ *
+ * @module pages/LibraryPage
+ */
+
 import { useState, useEffect } from "react";
 import type { WgerExercise } from "../types";
 
+/** Filter chip definitions — value is matched against category and muscle names */
 const FILTER_CHIPS = [
   { label: "All", value: "" },
   { label: "Chest", value: "Chest" },
@@ -11,6 +45,7 @@ const FILTER_CHIPS = [
   { label: "Core", value: "Core" },
 ];
 
+/** Colour map from category name to hex — used for accent bars and tags */
 const MUSCLE_COLORS: Record<string, string> = {
   Chest: "#3B82F6",
   Back: "#10B981",
@@ -21,14 +56,35 @@ const MUSCLE_COLORS: Record<string, string> = {
   Default: "#94A3B8",
 };
 
+/**
+ * LibraryPage
+ *
+ * Displays a searchable, filterable list of exercises from the WGER API.
+ * Results are cached in `sessionStorage` for the duration of the session.
+ */
 export default function LibraryPage() {
+  /** Full fetched/cached exercise list */
   const [exercises, setExercises] = useState<WgerExercise[]>([]);
+
+  /** Filtered subset currently visible in the list */
   const [filtered, setFiltered] = useState<WgerExercise[]>([]);
+
+  /** Active muscle-group filter chip value ("" = All) */
   const [activeFilter, setActiveFilter] = useState("");
+
+  /** Search query string */
   const [search, setSearch] = useState("");
+
+  /** Whether the API fetch is in progress */
   const [loading, setLoading] = useState(true);
+
+  /** Id of the currently expanded accordion row, or null */
   const [expanded, setExpanded] = useState<number | null>(null);
 
+  /**
+   * Fetch / hydrate exercise data on mount.
+   * Checks sessionStorage first; falls back to WGER API fetch.
+   */
   useEffect(() => {
     const cached = sessionStorage.getItem("apexlog_library_cache");
     if (cached) {
@@ -65,6 +121,11 @@ export default function LibraryPage() {
       .catch(() => setLoading(false));
   }, []);
 
+  /**
+   * Re-filter whenever the active chip, search query, or exercise list changes.
+   * Chip filter matches against category name and muscle names (case-insensitive).
+   * Search filter matches against exercise name.
+   */
   useEffect(() => {
     let result = exercises;
     if (activeFilter) {
@@ -83,14 +144,21 @@ export default function LibraryPage() {
     setFiltered(result);
   }, [activeFilter, search, exercises]);
 
-  const getColor = (category: string) => {
-    return MUSCLE_COLORS[category] || MUSCLE_COLORS.Default;
-  };
+  /**
+   * getColor
+   *
+   * Returns the hex accent colour for a given exercise category.
+   *
+   * @param {string} category - The WGER category name (e.g. "Chest").
+   * @returns {string} Hex colour string.
+   */
+  const getColor = (category: string): string =>
+    MUSCLE_COLORS[category] || MUSCLE_COLORS.Default;
 
   return (
     <div className="min-h-screen bg-background text-white">
       <div className="px-4 pt-6 pb-32 mx-auto max-w-2xl lg:px-8 lg:pt-28 lg:pb-16">
-        {/* Header */}
+        {/* ── PAGE HEADER ── */}
         <div className="mb-8">
           <h1 className="text-3xl lg:text-4xl font-bold text-text-primary mb-2">
             Exercise Library
@@ -101,7 +169,7 @@ export default function LibraryPage() {
           </p>
         </div>
 
-        {/* Search */}
+        {/* ── SEARCH INPUT ── */}
         <div className="relative mb-4">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -126,7 +194,7 @@ export default function LibraryPage() {
           />
         </div>
 
-        {/* Filter chips */}
+        {/* ── FILTER CHIPS — horizontally scrollable on mobile ── */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 mb-6">
           {FILTER_CHIPS.map((chip) => (
             <button
@@ -143,13 +211,15 @@ export default function LibraryPage() {
           ))}
         </div>
 
-        {/* Results */}
+        {/* ── RESULTS ── */}
         {loading ? (
+          /* Loading spinner */
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             <p className="text-muted text-sm">Loading exercise library...</p>
           </div>
         ) : filtered.length === 0 ? (
+          /* Empty state with clear-filters CTA */
           <div className="text-center py-16">
             <p className="text-muted text-lg mb-2">No exercises found</p>
             <button
@@ -163,6 +233,7 @@ export default function LibraryPage() {
             </button>
           </div>
         ) : (
+          /* Accordion list */
           <div className="space-y-2">
             {filtered.map((ex) => {
               const color = getColor(ex.category);
@@ -172,11 +243,14 @@ export default function LibraryPage() {
                   key={ex.id}
                   className="bg-card/50 rounded-2xl border border-surface overflow-hidden"
                 >
+                  {/* Collapsed row — tap to expand */}
                   <button
                     onClick={() => setExpanded(isOpen ? null : ex.id)}
                     className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-surface/30 transition-colors"
+                    aria-expanded={isOpen}
                   >
                     <div className="flex items-center gap-3 min-w-0">
+                      {/* Category accent bar */}
                       <div
                         className="w-2 h-8 rounded-full flex-shrink-0"
                         style={{ backgroundColor: color }}
@@ -193,6 +267,7 @@ export default function LibraryPage() {
                         </p>
                       </div>
                     </div>
+                    {/* Chevron — rotates when open */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className={`h-4 w-4 text-muted flex-shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -209,10 +284,12 @@ export default function LibraryPage() {
                     </svg>
                   </button>
 
+                  {/* Expanded panel — description + muscle tags */}
                   {isOpen && (
                     <div className="px-4 pb-4 pt-0 border-t border-surface">
                       {ex.description ? (
                         <p className="text-muted text-sm leading-relaxed mt-3">
+                          {/* Truncate long descriptions at 300 chars */}
                           {ex.description.slice(0, 300)}
                           {ex.description.length > 300 ? "..." : ""}
                         </p>
