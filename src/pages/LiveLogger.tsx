@@ -43,6 +43,7 @@ import {
 } from "../types";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useAuth } from "../context/useAuth";
+import apiFetch from "../config/apiHelper";
 
 /**
  * LiveLogger
@@ -53,7 +54,7 @@ import { useAuth } from "../context/useAuth";
  */
 export default function LiveLogger() {
   const navigate = useNavigate();
-  const { historyKey } = useAuth();
+  const { historyKey, token } = useAuth();
 
   /** The in-progress workout — array of exercises with their sets */
   const [activeWorkout, setActiveWorkout] = useLocalStorage<LoggedExercise[]>(
@@ -202,7 +203,7 @@ export default function LiveLogger() {
    * exercise/set state into the `WorkoutSummary` for the detail view.
    * Resets active workout and timer, then navigates to the dashboard.
    */
-  const handleFinishWorkout = () => {
+  const handleFinishWorkout = async () => {
     let totalVolume = 0;
     let completedSetCount = 0;
 
@@ -228,24 +229,7 @@ export default function LiveLogger() {
 
     const durationMinutes = Math.max(1, Math.round(secondsElapsed / 60));
 
-    // Snapshot the full exercise + set state for the WorkoutDetail view
-    const exerciseSnapshots: import("../types").LoggedExercise[] =
-      activeWorkout.map((ex) => ({
-        id: ex.id,
-        name: ex.name,
-        muscleGroups: ex.muscleGroups,
-        sets: ex.sets.map((s) => ({
-          id: s.id,
-          setNumber: s.setNumber,
-          previousStr: s.previousStr,
-          weight: s.weight,
-          reps: s.reps,
-          isCompleted: s.isCompleted,
-        })),
-      }));
-
-    const completedWorkout: WorkoutSummary = {
-      id: `wo-${Date.now()}`,
+    const workoutData = {
       title: activeWorkout[0]?.name || "Custom Workout",
       date: new Date().toLocaleDateString("en-US", {
         month: "short",
@@ -253,13 +237,35 @@ export default function LiveLogger() {
       }),
       volumeKg: totalVolume,
       durationMinutes,
-      exercises: exerciseSnapshots,
+      exercises: activeWorkout.map((ex) => ({
+        id: ex.id,
+        name: ex.name,
+        muscleGroups: ex.muscleGroups,
+        sets: ex.sets.map((s) => ({
+          id: s.id,
+          setNumber: s.setNumber,
+          previouseStr: s.previousStr,
+          weight: s.weight,
+          reps: s.reps,
+          isCompleted: s.isCompleted,
+        })),
+      })),
     };
 
-    setWorkoutHistory([completedWorkout, ...workoutHistory]);
-    setActiveWorkout([]);
-    setStartTime(Date.now());
-    navigate("/dashboard");
+    try {
+      await apiFetch("/workouts", token, {
+        method: "POST",
+        body: JSON.stringify(workoutData),
+      });
+
+      // Reset activae workout and timer
+      setActiveWorkout([]);
+      setStartTime(Date.now());
+      navigate("/dashboard");
+    } catch (error) {
+      alert("Failed to save workout. Please try again.");
+      console.error(error);
+    }
   };
 
   /**
