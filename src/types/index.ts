@@ -137,3 +137,9 @@ export interface Slide {
     accent: string;
     steps?: string[];
 }
+
+// Type for Fetching api options call
+export interface FetchOptions {
+    method?: "GET" | "POST" | "PUT" | "DELETE";
+    body?: string;
+}
