@@ -28,23 +28,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import type { Slide } from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Slide data
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Slide definition.
- * `steps` is optional — only slides 2 and 3 include it.
- */
-interface Slide {
-  emoji: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  accent: string;
-  steps?: string[];
-}
 
 const SLIDES: Slide[] = [
   {
@@ -115,7 +103,7 @@ const SLIDES: Slide[] = [
 export default function Onboarding() {
   const [current, setCurrent] = useState(0);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
 
   const slide = SLIDES[current];
   const isLast = current === SLIDES.length - 1;
@@ -127,9 +115,9 @@ export default function Onboarding() {
    * Advances to the next slide. On the last slide, marks onboarding as
    * complete and navigates to the dashboard.
    */
-  const handleNext = () => {
+  const handleNext = async () => {
     if (isLast) {
-      localStorage.setItem("apexlog_onboarded", "true");
+      await updateProfile({ hasOnboarded: true });
       navigate("/dashboard");
     } else {
       setCurrent((c) => c + 1);
@@ -151,8 +139,8 @@ export default function Onboarding() {
    * Marks onboarding as complete and navigates to the dashboard immediately.
    * Available on all slides except the last.
    */
-  const handleSkip = () => {
-    localStorage.setItem("apexlog_onboarded", "true");
+  const handleSkip = async () => {
+    await updateProfile({ hasOnboarded: true });
     navigate("/dashboard");
   };
 

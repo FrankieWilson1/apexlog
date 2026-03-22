@@ -24,7 +24,7 @@ import { useAuth } from "../context/useAuth";
  */
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,8 +41,7 @@ export default function Login() {
   const handleSubmit = async () => {
     setError("");
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-    const result = login(email, password);
+    const result = await login(email, password);
     setIsLoading(false);
 
     if (!result.success) {
@@ -50,8 +49,8 @@ export default function Login() {
       return;
     }
 
-    const hasOnboarded = localStorage.getItem("apexlog_onboarded");
-    navigate(hasOnboarded ? "/dashboard" : "/onboarding");
+    // hasOnboarded is now used from backend instead of frontend.
+    navigate(user?.hasOnboarded ? "/dashboard" : "/onboarding");
   };
 
   return (

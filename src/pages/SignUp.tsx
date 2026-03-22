@@ -42,7 +42,7 @@ export default function Signup() {
     setError("");
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 400));
-    const result = signup(name, email, password);
+    const result = await signup(name, email, password);
     setIsLoading(false);
 
     if (!result.success) {
