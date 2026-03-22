@@ -1,38 +1,20 @@
 /**
  * @file HomeDashboard.tsx
  * @description The main authenticated dashboard for ApexLog.
- *
- * Displays a personalised greeting, workout streak, the weekly volume bar
- * chart, recent activity list, and two stat cards (streak + total volume).
- *
- * ## Layout strategy
- * The component renders two independent layouts in parallel:
- * - **Mobile** (`lg:hidden`) — stacked single-column layout.
- * - **Desktop** (`hidden lg:grid`) — 12-column grid: 8-col chart/stats on
- *   the left, 4-col sticky recent activities panel on the right.
- *
- * ## Data flow
- * All workout history is read from `localStorage` via `useLocalStorage`.
- * The history key is user-scoped (`apexlog_history_${user.id}`) so data
- * is fully isolated between accounts. Derived stats (streak, total volume,
- * chart data) are computed with `useMemo` to avoid redundant recalculation.
- *
- * ## Sub-components
- * `EmptyState` and `ActivityList` are defined in this file (not exported)
- * because they are tightly coupled to the dashboard layout and not reused
- * elsewhere.
+ * Fetches workout history from the backend API and displays
+ * volume charts, streak, total volume and recent activities.
  *
  * @module pages/HomeDashboard
  */
 
 import { useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import HistoryCard from "../components/HistoryCard";
 import VolumeChart from "../components/VolumeChart";
-import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useAuth } from "../context/useAuth";
 import type { WorkoutSummary } from "../types";
 import { calculateStreak, calculateTotalVolume } from "../utils/WorkoutStats";
+import apiFetch from "../config/apiHelper";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -140,8 +122,46 @@ function ActivityList({ history, onNavigate }: ActivityListProps) {
  */
 export default function HomeDashboard() {
   const navigate = useNavigate();
-  const { user, historyKey } = useAuth();
-  const [history] = useLocalStorage<WorkoutSummary[]>(historyKey, []);
+  const { user, token } = useAuth();
+
+  //______ API state ____________________________________________________
+  const [history, setHistory] = useState<WorkoutSummary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Fetch workout history from the backend on mount.
+   * Maps MongoDB documents to WorkoutSummary shape.
+   */
+  useEffect(() => {
+    const fetchWorkouts = async () => {
+      try {
+        setIsLoading(true);
+        const data = await apiFetch("/workouts", token);
+
+        // Map MongoDB _id to id for compatibility with existing components
+        const mapped: WorkoutSummary[] = data.map((w: any) => ({
+          id: w._id,
+          title: w.title,
+          date: w.date,
+          volumeKg: w.volumeKg,
+          durationMinutes: w.durationMunites,
+          exercises: w.exercises,
+        }));
+
+        setHistory(mapped);
+      } catch (err) {
+        setError("Failed to load workouts. Please try again.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (token) fetchWorkouts();
+  }, [token]);
+
+  // ___ Derived stats ____________________________________________
 
   /**
    * Chart data derived from the most recent 7 sessions, reversed so the
@@ -182,10 +202,48 @@ export default function HomeDashboard() {
       ? `🔥 ${streak} Day Streak | ${history.length} Workouts Logged`
       : "Start your first workout to build your streak!";
 
+  // __________________ Loading state ____________________________________
+
+  if (isLoading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#0F172A" }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted text-sm">Loading your workouts...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ____ Error state ______________________________________________________
+
+  if (error) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#0F172A" }}
+      >
+        <div className="flex flex-col items-center gap-4 text-center px-6">
+          <p className="text-red-400 font-semibold">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-primary text-sm font-semibold hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-white">
       <div className="p-6 pt-6 pb-32 mx-auto max-w-7xl lg:p-10 lg:pt-28 lg:pb-16">
         {/* ── PAGE HEADER: greeting, streak subtitle, CTA, avatar ── */}
+
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-8">
           <div className="flex items-start justify-between">
             <div>
@@ -194,7 +252,9 @@ export default function HomeDashboard() {
               </h1>
               <p className="text-muted lg:text-lg">{streakLabel}</p>
             </div>
+
             {/* Mobile avatar — hidden on desktop (desktop version is in the flex row below) */}
+
             <button
               onClick={() => navigate("/profile")}
               className="lg:hidden w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary/30 flex-shrink-0 overflow-hidden"
@@ -210,7 +270,9 @@ export default function HomeDashboard() {
             >
               Start Empty Workout
             </button>
+
             {/* Desktop avatar */}
+
             <button
               onClick={() => navigate("/profile")}
               className="hidden lg:flex w-12 h-12 rounded-full bg-primary items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity overflow-hidden"
@@ -246,6 +308,7 @@ export default function HomeDashboard() {
           </div>
 
           {/* Stat cards */}
+
           <div className="grid grid-cols-2 gap-4 pb-8">
             <div className="bg-surface p-5 rounded-2xl border border-white/5">
               <h4 className="text-muted text-xs uppercase font-bold mb-2">
@@ -267,6 +330,7 @@ export default function HomeDashboard() {
         </div>
 
         {/* ── DESKTOP LAYOUT — 12-column grid ── */}
+
         <div className="hidden lg:grid lg:grid-cols-12 gap-8">
           {/* Left: chart + stat cards */}
           <div className="lg:col-span-8 space-y-8">
@@ -322,6 +386,7 @@ export default function HomeDashboard() {
                 </div>
               ) : (
                 /* Scrollable list — `no-scrollbar` hides the scrollbar visually */
+
                 <div className="flex-1 overflow-y-auto no-scrollbar">
                   {history.map((workout) => (
                     <HistoryCard key={workout.id} workout={workout} />
