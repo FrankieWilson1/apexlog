@@ -145,7 +145,7 @@ export default function HomeDashboard() {
           title: w.title,
           date: w.date,
           volumeKg: w.volumeKg,
-          durationMinutes: w.durationMunites,
+          durationMinutes: w.durationMinutes,
           exercises: w.exercises,
         }));
 
