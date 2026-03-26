@@ -154,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (
     email: string,
     password: string,
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; hasOnboarded?: boolean }> => {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
@@ -169,7 +169,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       persistSession(mapApiUser(data), data.token);
-      return { success: true };
+
+      return { success: true, hasOnboarded: data.hasOnboarded };
     } catch {
       return { success: false, error: "Network error. Please try again." };
     }

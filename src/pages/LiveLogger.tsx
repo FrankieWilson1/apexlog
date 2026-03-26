@@ -17,15 +17,14 @@
  * On finish, the component:
  * 1. Validates that at least one set was completed.
  * 2. Calculates total volume (Σ weight × reps for completed sets).
- * 3. Snapshots all exercise + set data into the `WorkoutSummary`.
- * 4. Prepends the summary to the user's history in `localStorage`.
- * 5. Resets active workout and timer, then navigates to `/dashboard`.
+ * 3. Snapshots all exercise + set data and sends to backend API.
+ * 4. Resets active workout and timer, then navigates to `/dashboard`.
  *
  * ## State
- * All persistent state (`activeWorkout`, `workoutHistory`, `startTime`) is
- * managed via `useLocalStorage` so the session survives a browser refresh.
- * Ephemeral UI state (`secondsElapsed`, `isSearchModalOpen`) lives in
- * `useState`.
+ * Persistent state (`activeWorkout`, `startTime`) is managed via
+ * `useLocalStorage` so the session survives a browser refresh.
+ * Ephemeral UI state (`secondsElapsed`, `isSearchModalOpen`) lives
+ * in `useState`.
  *
  * @module pages/LiveLogger
  */
@@ -39,7 +38,6 @@ import {
   type LoggedExercise,
   type ExerciseSet,
   type ExerciseDefinition,
-  type WorkoutSummary,
 } from "../types";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useAuth } from "../context/useAuth";
@@ -54,18 +52,12 @@ import apiFetch from "../config/apiHelper";
  */
 export default function LiveLogger() {
   const navigate = useNavigate();
-  const { historyKey, token } = useAuth();
+  const { token } = useAuth();
 
   /** The in-progress workout — array of exercises with their sets */
   const [activeWorkout, setActiveWorkout] = useLocalStorage<LoggedExercise[]>(
     "apexlog_active_workout",
     mockLiveWorkouts,
-  );
-
-  /** The user's saved workout history (prepended to on finish) */
-  const [workoutHistory, setWorkoutHistory] = useLocalStorage<WorkoutSummary[]>(
-    historyKey,
-    [],
   );
 
   /**
@@ -88,17 +80,28 @@ export default function LiveLogger() {
 
   /**
    * Timer interval effect.
-   * Recalculates `secondsElapsed` every second by diffing the current time
-   * against `startTime`. Re-runs whenever `startTime` changes (e.g. on reset).
+   * - If no active workout, clears the timer and stops.
+   * - Otherwise recalculates `secondsElapsed` every second.
+   * - Cleanup function stops the interval on unmount so it never
+   *   runs in the background after navigation.
    */
   useEffect(() => {
+    // No active workout — reset timer completely
+    if (activeWorkout.length === 0) {
+      localStorage.removeItem("apexlog_workout_start");
+      setSecondsElapsed(0);
+      return;
+    }
+
     const interval = setInterval(() => {
       setSecondsElapsed(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
-    return () => clearInterval(interval);
-  }, [startTime]);
 
-  // ── Event handlers ─────────────────────────────────────────────────────────
+    // Stops the interval when the component unmounts or startTime changes
+    return () => clearInterval(interval);
+  }, [startTime, activeWorkout.length]);
+
+  // ── Event handlers ──────────────────────────────────────────────────────
 
   /**
    * handleUpdateSet
@@ -198,9 +201,9 @@ export default function LiveLogger() {
   /**
    * handleFinishWorkout
    *
-   * Validates, calculates, and saves the completed workout to history.
+   * Validates, calculates, and saves the completed workout to the backend.
    * Guards against finishing with zero completed sets. Snapshots the full
-   * exercise/set state into the `WorkoutSummary` for the detail view.
+   * exercise/set state and sends to POST /api/workouts.
    * Resets active workout and timer, then navigates to the dashboard.
    */
   const handleFinishWorkout = async () => {
@@ -244,7 +247,7 @@ export default function LiveLogger() {
         sets: ex.sets.map((s) => ({
           id: s.id,
           setNumber: s.setNumber,
-          previouseStr: s.previousStr,
+          previousStr: s.previousStr,
           weight: s.weight,
           reps: s.reps,
           isCompleted: s.isCompleted,
@@ -258,8 +261,9 @@ export default function LiveLogger() {
         body: JSON.stringify(workoutData),
       });
 
-      // Reset activae workout and timer
+      // Clear active workout and timer completely
       setActiveWorkout([]);
+      localStorage.removeItem("apexlog_workout_start");
       setStartTime(Date.now());
       navigate("/dashboard");
     } catch (error) {
@@ -277,6 +281,7 @@ export default function LiveLogger() {
   const handleDiscard = () => {
     if (confirm("Discard this workout?")) {
       setActiveWorkout([]);
+      localStorage.removeItem("apexlog_workout_start");
       setStartTime(Date.now());
       navigate("/dashboard");
     }

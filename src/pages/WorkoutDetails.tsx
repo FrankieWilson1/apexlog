@@ -50,7 +50,7 @@ export default function WorkoutDetail() {
           title: data.title,
           date: data.date,
           volumeKg: data.volumeKg,
-          durationMinutes: data.durationMunites,
+          durationMinutes: data.durationMinutes,
           exercises: data.exercises,
         });
       } catch (err) {

@@ -24,7 +24,7 @@ import { useAuth } from "../context/useAuth";
  */
 export default function Login() {
   const navigate = useNavigate();
-  const { login, user } = useAuth();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,7 +50,7 @@ export default function Login() {
     }
 
     // hasOnboarded is now used from backend instead of frontend.
-    navigate(user?.hasOnboarded ? "/dashboard" : "/onboarding");
+    navigate(result.hasOnboarded ? "/dashboard" : "/onboarding");
   };
 
   return (

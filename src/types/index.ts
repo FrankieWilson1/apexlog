@@ -95,7 +95,7 @@ export interface AuthContextType {
     login: (
         email: string,
         password: string,
-    ) => Promise<{ success: boolean; error?: string }>;
+    ) => Promise<{ success: boolean; error?: string, hasOnboarded?: boolean; }>;
     logout: () => void;
     updateProfile: (updates: Partial<AuthUser>) => void;
 }
