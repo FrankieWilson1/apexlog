@@ -21,9 +21,10 @@
  */
 
 import { useNavigate, useParams } from "react-router-dom";
-import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useAuth } from "../context/useAuth";
 import type { WorkoutSummary } from "../types";
+import { useEffect, useState } from "react";
+import apiFetch from "../config/apiHelper";
 
 /**
  * WorkoutDetail
@@ -35,13 +36,47 @@ import type { WorkoutSummary } from "../types";
 export default function WorkoutDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { historyKey } = useAuth();
-  const [history] = useLocalStorage<WorkoutSummary[]>(historyKey, []);
+  const { token } = useAuth();
+  const [workout, setWorkout] = useState<WorkoutSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const workout = history.find((w) => w.id === id);
+  useEffect(() => {
+    const fetchWorkout = async () => {
+      try {
+        const data = await apiFetch(`/workouts/${id}`, token);
+        setWorkout({
+          id: data._id,
+          title: data.title,
+          date: data.date,
+          volumeKg: data.volumeKg,
+          durationMinutes: data.durationMinutes,
+          exercises: data.exercises,
+        });
+      } catch (err) {
+        setError("Workout not found.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (token && id) fetchWorkout();
+  }, [token, id]);
 
   // ── Not-found guard ───────────────────────────────────────────────────────
-  if (!workout) {
+  if (isLoading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#0F172A" }}
+      >
+        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !workout) {
     return (
       <div className="min-h-screen bg-background text-white flex flex-col items-center justify-center p-6">
         <p className="text-muted text-lg mb-4">Workout not found.</p>

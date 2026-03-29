@@ -2,103 +2,117 @@
  * @file SettingsPage.tsx
  * @description App-wide settings page for ApexLog.
  *
- * Organised into four sections:
- * - **Account** — mini profile card with edit shortcut
- * - **Preferences** — weight unit toggle, workout reminders toggle,
- *   compact history view toggle
- * - **App** — replay onboarding, What's New, About links
- * - **Data** — clear workout history (two-tap confirmation)
- * - **Account** — logout (two-tap confirmation)
+ * Organised into five sections: Account card, Preferences, App links,
+ * Data management, and Account actions.
  *
- * ## Preferences persistence
- * All preference values are stored in `localStorage` via `useLocalStorage`:
- * - `apexlog_weight_unit` — `"kg" | "lbs"`
- * - `apexlog_notifications` — `boolean`
- * - `apexlog_compact` — `boolean`
- *
- * Note: the notifications and compact-view toggles are UI-only in v2;
- * the actual functionality (push notifications, compact card rendering)
- * is on the v3 roadmap.
+ * ## Preference persistence
+ * - `weightUnit` and `notifications` — persisted to the backend via
+ *   `updateProfile` (PUT /api/users/profile). Follow the user across
+ *   devices and sessions.
+ * - `compactView` — UI-only preference, stays in localStorage since
+ *   it has no backend equivalent yet.
  *
  * ## Two-tap destructive actions
- * Both "Clear Workout History" and "Log Out" require a second tap to
- * confirm. State flags `confirmClear` and `confirmLogout` track whether
- * the first tap has been registered, causing the button label to update
- * to a warning before executing on the second tap.
+ * "Clear Workout History" and "Log Out" both require a second tap to
+ * confirm, preventing accidental data loss.
  *
  * @module pages/SettingsPage
  */
 
-import { useAuth } from "../context/useAuth";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import apiFetch from "../config/apiHelper";
 
-/**
- * SettingsPage
- *
- * Displays user preferences and account management options. All preference
- * state is persisted to `localStorage` immediately on change.
- */
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { user, logout, historyKey } = useAuth();
+  const { user, token, logout, updateProfile } = useAuth();
 
-  /** Write-only setter for the user's workout history (used to clear it) */
-  const [, setHistory] = useLocalStorage(historyKey, []);
+  // ── Preferences ───────────────────────────────────────────────────────────
 
-  /** Weight unit displayed throughout the app */
-  const [weightUnit, setWeightUnit] = useLocalStorage<"kg" | "lbs">(
-    "apexlog_weight_unit",
-    "kg",
+  /**
+   * Weight unit — persisted to the backend so it follows the user
+   * across devices. Reads initial value from the user object.
+   */
+  const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">(
+    user?.weightUnit || "kg",
   );
 
-  /** Whether daily workout reminder notifications are enabled (UI only in v2) */
-  const [notifications, setNotifications] = useLocalStorage<boolean>(
-    "apexlog_notifications",
-    true,
+  /**
+   * Notification preference — persisted to the backend.
+   * Functionality (push notifications) is planned for v3.
+   */
+  const [notifications, setNotifications] = useState<boolean>(
+    user?.notifications ?? true,
   );
 
-  /** Whether to render compact history cards (UI only in v2) */
+  /**
+   * Compact history view — UI-only preference, localStorage only.
+   * No backend equivalent until v3.
+   */
   const [compactView, setCompactView] = useLocalStorage<boolean>(
     "apexlog_compact",
     false,
   );
 
-  /** First-tap flag for the clear-history confirmation flow */
+  // ── Confirmation flags ────────────────────────────────────────────────────
   const [confirmClear, setConfirmClear] = useState(false);
-
-  /** First-tap flag for the logout confirmation flow */
   const [confirmLogout, setConfirmLogout] = useState(false);
-
-  /** Whether history was just cleared — shows a brief success message */
   const [cleared, setCleared] = useState(false);
 
-  // ── Handlers ─────────────────────────────────────────────────────────────
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   /**
-   * handleClearHistory
-   *
-   * Two-tap destructive action. First tap sets `confirmClear` to show the
-   * warning label. Second tap clears the history array and shows a
-   * "✓ History cleared" confirmation for 3 seconds.
+   * Persists the weight unit to the backend immediately on change.
+   * Updates local state optimistically so the UI responds instantly.
    */
-  const handleClearHistory = () => {
+  const handleWeightUnitChange = async (unit: "kg" | "lbs") => {
+    setWeightUnit(unit);
+    await updateProfile({ weightUnit: unit });
+  };
+
+  /**
+   * Persists the notification preference to the backend immediately.
+   */
+  const handleNotificationsToggle = async () => {
+    const newValue = !notifications;
+    setNotifications(newValue);
+    await updateProfile({ notifications: newValue });
+  };
+
+  /**
+   * Resets onboarding by setting hasOnboarded to false on the backend,
+   * then navigates to the onboarding flow.
+   */
+  const handleReplayOnboarding = async () => {
+    await updateProfile({ hasOnboarded: false });
+    navigate("/onboarding");
+  };
+
+  /**
+   * Two-tap clear history. First tap shows a warning.
+   * Second tap calls DELETE /api/workouts/all on the backend.
+   */
+  const handleClearHistory = async () => {
     if (!confirmClear) {
       setConfirmClear(true);
       return;
     }
-    setHistory([]);
-    setConfirmClear(false);
-    setCleared(true);
-    setTimeout(() => setCleared(false), 3000);
+    try {
+      await apiFetch("/workouts/all", token, { method: "DELETE" });
+      setConfirmClear(false);
+      setCleared(true);
+      setTimeout(() => setCleared(false), 3000);
+    } catch {
+      alert("Failed to clear history. Please try again.");
+      setConfirmClear(false);
+    }
   };
 
   /**
-   * handleLogout
-   *
-   * Two-tap logout. First tap updates the label to a warning. Second tap
-   * calls `logout()` and navigates to the landing page.
+   * Two-tap logout. First tap shows a warning.
+   * Second tap calls logout() and navigates to the landing page.
    */
   const handleLogout = () => {
     if (!confirmLogout) {
@@ -109,18 +123,8 @@ export default function SettingsPage() {
     navigate("/");
   };
 
-  /**
-   * handleReplayOnboarding
-   *
-   * Removes the `apexlog_onboarded` key from `localStorage` so the
-   * onboarding flow will show again, then navigates to `/onboarding`.
-   */
-  const handleReplayOnboarding = () => {
-    localStorage.removeItem("apexlog_onboarded");
-    navigate("/onboarding");
-  };
+  // ── Reusable UI primitives ────────────────────────────────────────────────
 
-  /** Reusable chevron icon for row-style navigation items */
   const ChevronRight = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -138,12 +142,6 @@ export default function SettingsPage() {
     </svg>
   );
 
-  /**
-   * Toggle
-   *
-   * Inline iOS-style toggle switch. Rendered as a `<button>` with a
-   * sliding white knob.
-   */
   const Toggle = ({
     value,
     onToggle,
@@ -153,9 +151,9 @@ export default function SettingsPage() {
   }) => (
     <button
       onClick={onToggle}
-      className={`w-12 h-6 rounded-full transition-all relative ${value ? "bg-primary" : "bg-surface"}`}
       role="switch"
       aria-checked={value}
+      className={`w-12 h-6 rounded-full transition-all relative ${value ? "bg-primary" : "bg-surface"}`}
     >
       <span
         className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${value ? "left-7" : "left-1"}`}
@@ -207,7 +205,7 @@ export default function SettingsPage() {
             Preferences
           </p>
           <div className="bg-card/40 rounded-2xl border border-surface divide-y divide-surface">
-            {/* Weight unit toggle pill */}
+            {/* Weight unit — saved to backend */}
             <div className="flex items-center justify-between px-5 py-4">
               <div>
                 <p className="text-text-primary font-semibold text-sm">
@@ -221,7 +219,7 @@ export default function SettingsPage() {
                 {(["kg", "lbs"] as const).map((unit) => (
                   <button
                     key={unit}
-                    onClick={() => setWeightUnit(unit)}
+                    onClick={() => handleWeightUnitChange(unit)}
                     className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
                       weightUnit === unit
                         ? "bg-primary text-white"
@@ -234,7 +232,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Notifications toggle (UI only in v2) */}
+            {/* Notifications — saved to backend, UI only in v2 */}
             <div className="flex items-center justify-between px-5 py-4">
               <div>
                 <p className="text-text-primary font-semibold text-sm">
@@ -246,11 +244,11 @@ export default function SettingsPage() {
               </div>
               <Toggle
                 value={notifications}
-                onToggle={() => setNotifications(!notifications)}
+                onToggle={handleNotificationsToggle}
               />
             </div>
 
-            {/* Compact view toggle (UI only in v2) */}
+            {/* Compact view — localStorage only */}
             <div className="flex items-center justify-between px-5 py-4">
               <div>
                 <p className="text-text-primary font-semibold text-sm">
@@ -268,7 +266,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* ── APP NAVIGATION ROWS ── */}
+        {/* ── APP LINKS ── */}
         <div className="mb-6">
           <p className="text-xs font-bold uppercase tracking-widest text-muted mb-3 px-1">
             App
@@ -321,15 +319,15 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* ── DATA — clear history ── */}
+        {/* ── DATA ── */}
         <div className="mb-6">
           <p className="text-xs font-bold uppercase tracking-widest text-muted mb-3 px-1">
             Data
           </p>
-          <div className="bg-card/40 rounded-2xl border border-surface divide-y divide-surface">
+          <div className="bg-card/40 rounded-2xl border border-surface">
             <button
               onClick={handleClearHistory}
-              className="w-full flex items-center justify-between px-5 py-4 hover:bg-red-500/10 transition-colors text-left"
+              className="w-full flex items-center justify-between px-5 py-4 hover:bg-red-500/10 transition-colors text-left rounded-2xl"
             >
               <div>
                 <p
@@ -349,7 +347,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* ── ACCOUNT — logout ── */}
+        {/* ── ACCOUNT ── */}
         <div className="mb-8">
           <p className="text-xs font-bold uppercase tracking-widest text-muted mb-3 px-1">
             Account
@@ -375,7 +373,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Footer */}
         <p className="text-center text-muted text-xs">
           ApexLog v2.0 · ALX Capstone · Built by Frank Williams Ugwu
         </p>
