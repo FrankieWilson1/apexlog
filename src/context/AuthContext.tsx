@@ -2,15 +2,23 @@
  * @file AuthContext.tsx
  * @description Global authentication context for ApexLog.
  *
- * Provides user session management, signup, login, logout, and profile
- * updates to the entire component tree via React Context.
+ * Manages user session state and exposes auth actions to the entire
+ * component tree. All API communication goes through this context —
+ * components never call auth endpoints directly.
  *
- * ## Storage keys
- * | Key | Purpose |
- * |-----|---------|
- * | `apexlog_token` | JWT token returned by the backend on login/register |
- * | `apexlog_user`  | Serialised AuthUser object for session restoration |
- * | `apexlog_history_${id}` | Per-user workout history (temporary — will migrate to backend) |
+ * ## Session lifecycle
+ * 1. On mount: restore token + user from localStorage instantly, then
+ *    fetch fresh profile data from the backend to replace stale cache.
+ * 2. On login/register: persist token + user to localStorage and state.
+ * 3. On logout: clear all ApexLog keys from localStorage and reset state.
+ *
+ * ## localStorage keys
+ * | Key                      | Purpose                                       |
+ * |--------------------------|-----------------------------------------------|
+ * | `apexlog_token`          | JWT for authenticating API requests           |
+ * | `apexlog_user`           | Cached user object for instant session restore|
+ * | `apexlog_active_workout` | In-progress workout (cleared on logout)       |
+ * | `apexlog_workout_start`  | Timer start timestamp (cleared on logout)     |
  *
  * @module context/AuthContext
  */
@@ -20,28 +28,17 @@ import type { ReactNode } from "react";
 import type { AuthContextType, AuthUser } from "../types";
 import API_URL from "../config/api";
 
-/** React context object — consumed exclusively via the `useAuth` hook. */
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * AuthProvider
- *
- * Top-level context provider that wraps the application and exposes
- * authentication state and actions to all descendant components.
- *
- * @param {{ children: ReactNode }} props
- */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   /**
-   * On mount — restore session from localStorage.
-   * Runs once on app load so the user stays logged in
-   * across page refreshes without re-entering credentials.
+   * Session restore on mount.
+   * Reads localStorage synchronously for an instant render, then
+   * fires a background refresh to replace any stale cached data.
    */
   useEffect(() => {
     try {
@@ -51,9 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
+        refreshUser(storedToken); // background refresh — doesn't block render
       }
     } catch {
-      // Malformed storage — start fresh
       localStorage.removeItem("apexlog_token");
       localStorage.removeItem("apexlog_user");
     } finally {
@@ -61,35 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ── Computed ──────────────────────────────────────────────────────────────
-
-  /** True when both user and token are present */
-  const isAuthenticated = !!user && !!token;
-
-  /**
-   * Per-user history key — temporary during migration period.
-   * Will be removed once workout routes are fully connected to the backend.
-   */
-  const historyKey = user
-    ? `apexlog_history_${user.id}`
-    : "apexlog_history_guest";
-
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  /**
-   * Persists the user and token to localStorage and React state together.
-   * Called after both register and login succeed.
-   */
-  const persistSession = (userData: AuthUser, tokenData: string) => {
-    localStorage.setItem("apexlog_token", tokenData);
-    localStorage.setItem("apexlog_user", JSON.stringify(userData));
-    setToken(tokenData);
-    setUser(userData);
-  };
-
-  /**
-   * Maps the raw API response to the AuthUser shape used throughout the app.
-   */
+  /** Maps a raw backend response to the AuthUser shape */
   const mapApiUser = (data: any): AuthUser => ({
     id: data._id,
     name: data.name,
@@ -101,20 +72,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     weightUnit: data.weightUnit,
     notifications: data.notifications,
     hasOnboarded: data.hasOnboarded,
+    createdAt: data.createdAt,
   });
+
+  /** Persists a user and token to both localStorage and React state */
+  const persistSession = (userData: AuthUser, tokenData: string) => {
+    localStorage.setItem("apexlog_token", tokenData);
+    localStorage.setItem("apexlog_user", JSON.stringify(userData));
+    setToken(tokenData);
+    setUser(userData);
+  };
 
   // ── Auth actions ──────────────────────────────────────────────────────────
 
   /**
-   * signup
-   *
-   * Registers a new user via POST /api/auth/register.
-   * On success, persists the session and sets React state.
-   *
-   * @param {string} name
-   * @param {string} email
-   * @param {string} password
-   * @returns {Promise<{ success: boolean; error?: string }>}
+   * Fetches the latest profile from the backend and syncs local state.
+   * Called on session restore and from the Profile page on mount.
+   * Fails silently — stale cache is acceptable if the network is down.
+   */
+  const refreshUser = async (currentToken: string): Promise<void> => {
+    try {
+      const response = await fetch(`${API_URL}/users/profile`, {
+        headers: { Authorization: `Bearer ${currentToken}` },
+      });
+
+      if (!response.ok) return;
+
+      const freshUser = mapApiUser(await response.json());
+      setUser(freshUser);
+      localStorage.setItem("apexlog_user", JSON.stringify(freshUser));
+    } catch {
+      // Silent fail
+    }
+  };
+
+  /**
+   * Registers a new account via POST /api/auth/register.
+   * On success, persists the session immediately.
    */
   const signup = async (
     name: string,
@@ -129,10 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: data.message };
-      }
+      if (!response.ok) return { success: false, error: data.message };
 
       persistSession(mapApiUser(data), data.token);
       return { success: true };
@@ -142,14 +133,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * login
-   *
    * Authenticates an existing user via POST /api/auth/login.
-   * On success, persists the session and sets React state.
-   *
-   * @param {string} email
-   * @param {string} password
-   * @returns {Promise<{ success: boolean; error?: string }>}
+   * Returns hasOnboarded directly so the caller can route correctly
+   * without waiting for React state to update.
    */
   const login = async (
     email: string,
@@ -163,13 +149,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: data.message };
-      }
+      if (!response.ok) return { success: false, error: data.message };
 
       persistSession(mapApiUser(data), data.token);
-
       return { success: true, hasOnboarded: data.hasOnboarded };
     } catch {
       return { success: false, error: "Network error. Please try again." };
@@ -177,24 +159,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * logout
-   *
-   * Clears the session from both localStorage and React state.
+   * Clears all session data from localStorage and resets React state.
+   * Also removes in-progress workout data to prevent stale state
+   * if a different user logs in on the same device.
    */
   const logout = () => {
-    localStorage.removeItem("apexlog_token");
-    localStorage.removeItem("apexlog_user");
+    [
+      "apexlog_token",
+      "apexlog_user",
+      "apexlog_active_workout",
+      "apexlog_workout_start",
+    ].forEach((key) => localStorage.removeItem(key));
+
+    // Remove legacy per-user history keys from the old localStorage system
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith("apexlog_history_"))
+      .forEach((key) => localStorage.removeItem(key));
+
     setToken(null);
     setUser(null);
   };
 
   /**
-   * updateProfile
-   *
-   * Sends a partial profile update to PUT /api/users/profile,
-   * then merges the changes into local state and localStorage.
-   *
-   * @param {Partial<AuthUser>} updates
+   * Sends a partial profile update to PUT /api/users/profile.
+   * Uses the backend response as the source of truth to keep
+   * localStorage and React state consistent.
    */
   const updateProfile = async (updates: Partial<AuthUser>): Promise<void> => {
     try {
@@ -209,13 +198,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) return;
 
-      const updatedUser = { ...user, ...updates } as AuthUser;
+      const updatedUser = mapApiUser(await response.json());
       setUser(updatedUser);
       localStorage.setItem("apexlog_user", JSON.stringify(updatedUser));
-    } catch (error) {
-      console.error("Failed to update profile:", error);
+    } catch {
+      console.error("Failed to update profile");
     }
   };
+
+  // ── Computed ──────────────────────────────────────────────────────────────
+
+  const isAuthenticated = !!user && !!token;
+
+  /**
+   * Per-user key for the active workout in localStorage.
+   * Temporary — will be removed once the active workout session
+   * is fully managed server-side in a future release.
+   */
+  const historyKey = user
+    ? `apexlog_history_${user.id}`
+    : "apexlog_history_guest";
 
   return (
     <AuthContext.Provider
@@ -229,6 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         updateProfile,
+        refreshUser,
       }}
     >
       {children}

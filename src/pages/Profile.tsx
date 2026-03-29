@@ -3,54 +3,38 @@
  * @description User profile page for ApexLog.
  *
  * Displays the authenticated user's avatar, name, email, and join date.
- * Provides an edit mode for updating biometric fields (height, weight) and
- * fitness goal. Supports avatar upload (base64, max 2 MB) persisted via
- * `AuthContext.updateProfile`.
+ * Provides an edit mode for updating biometrics (height, weight, goal)
+ * and avatar upload. All changes are persisted to the backend via
+ * `AuthContext.updateProfile` (PUT /api/users/profile).
  *
- * ## Layout
- * Single-column centred layout (`max-w-lg`) with standard page padding:
- * - Mobile: `pt-6 pb-32`
- * - Desktop: `lg:pt-28 lg:pb-16`
- *
- * ## Edit flow
- * `isEditing` toggles the biometrics section between display mode (read-only
- * styled divs) and edit mode (inputs + select). The Save Changes button is
- * only rendered when `isEditing` is true, and shows a "✓ Saved!" confirmation
- * for 2 seconds after a successful save.
+ * ## Data freshness
+ * On mount, `refreshUser` fetches the latest profile from the backend
+ * so the page always reflects the current state — even if changes were
+ * made in another tab or on another device.
  *
  * ## Avatar
- * Photo uploads are handled via a hidden `<input type="file">` triggered by
- * the camera icon overlay. The file is validated (image type, max 2 MB) then
- * read as a base64 data URL via `FileReader`, stored in local state
- * (`avatarPreview`) and persisted immediately to `AuthContext`.
+ * Uploaded as a base64 data URL (max 2 MB). Stored in MongoDB.
+ * Cloud storage (Cloudinary / S3) is planned for v3.
  *
  * @module pages/Profile
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 
-/**
- * Profile
- *
- * Displays and edits the authenticated user's profile. Includes avatar
- * upload, biometrics editing, app info, and a logout button.
- */
 export default function Profile() {
   const navigate = useNavigate();
-  const { user, logout, updateProfile } = useAuth();
-
-  /** Ref to the hidden file input — triggered programmatically by the camera button */
+  const { user, token, logout, updateProfile, refreshUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Local form state ──────────────────────────────────────────────────────
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [goal, setGoal] = useState(user?.goal || "Build Muscle");
   const [height, setHeight] = useState(user?.height || "");
   const [weight, setWeight] = useState(user?.weight || "");
-  const [saved, setSaved] = useState(false);
-
-  /** Local preview of the avatar — initialised from `user.avatar` if set */
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     user?.avatar || null,
   );
@@ -63,74 +47,81 @@ export default function Profile() {
     "Increase Strength",
   ];
 
-  // ── Handlers ─────────────────────────────────────────────────────────────
+  /**
+   * Sync local form state whenever the user object updates in context.
+   * Ensures the display reflects saves made via updateProfile without
+   * requiring a page reload.
+   */
+  useEffect(() => {
+    if (user) {
+      setGoal(user.goal || "Build Muscle");
+      setHeight(user.height || "");
+      setWeight(user.weight || "");
+      setAvatarPreview(user.avatar || null);
+    }
+  }, [user]);
 
   /**
-   * handlePhotoChange
-   *
-   * Validates a selected photo file (must be an image, max 2 MB), reads it
-   * as a base64 data URL, updates the local preview, and persists it to the
-   * auth context immediately.
-   *
-   * @param {React.ChangeEvent<HTMLInputElement>} e - The file input change event.
+   * Fetch fresh profile data from the backend on mount.
+   * Replaces stale cached data and reflects changes made in other tabs.
    */
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (token) refreshUser(token);
+  }, [token]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
+  /**
+   * Validates the selected image file (type and size), converts it to
+   * a base64 data URL, updates the local preview, and persists it to
+   * the backend immediately — no need to click Save Changes.
+   */
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     if (!file.type.startsWith("image/")) {
       alert("Please select an image file.");
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      alert("Image must be smaller than 2MB.");
+      alert("Image must be smaller than 2 MB.");
       return;
     }
+
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const base64 = event.target?.result as string;
       setAvatarPreview(base64);
-      updateProfile({ avatar: base64 });
+      await updateProfile({ avatar: base64 });
     };
     reader.readAsDataURL(file);
   };
 
   /**
-   * handleSave
-   *
-   * Persists goal, height, and weight via `updateProfile`, exits edit mode,
-   * and briefly shows a "✓ Saved!" confirmation label.
+   * Sends the current form values to the backend, exits edit mode,
+   * and shows a brief "✓ Saved!" confirmation.
    */
-  const handleSave = () => {
-    updateProfile({ goal, height, weight });
+  const handleSave = async () => {
+    setIsSaving(true);
+    await updateProfile({ goal, height, weight });
+    setIsSaving(false);
     setIsEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
-  /**
-   * handleLogout
-   *
-   * Logs the user out via `AuthContext` and navigates to the landing page.
-   */
   const handleLogout = () => {
     logout();
     navigate("/");
   };
-
-  /** Formatted join date, e.g. "March 2025" */
-  const joinedDate = user?.joinedDate
-    ? new Date(user.joinedDate).toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      })
-    : "—";
 
   const avatarInitial = user?.name?.charAt(0).toUpperCase() || "?";
 
   return (
     <div className="min-h-screen bg-background text-white">
       <div className="p-6 pt-6 pb-32 mx-auto max-w-lg lg:pt-28 lg:pb-16">
-        {/* ── HEADER: back chevron | title | edit toggle ── */}
+        {/* ── HEADER ── */}
         <div className="flex items-center justify-between mb-10">
           <button
             onClick={() => navigate("/dashboard")}
@@ -138,8 +129,8 @@ export default function Profile() {
             aria-label="Back to dashboard"
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
+              xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -164,7 +155,6 @@ export default function Profile() {
         {/* ── AVATAR + NAME ── */}
         <div className="flex flex-col items-center gap-3 mb-10">
           <div className="relative">
-            {/* Avatar circle — photo or initial */}
             <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-primary/30 overflow-hidden">
               {avatarPreview ? (
                 <img
@@ -177,15 +167,14 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Camera overlay button */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center border-2 border-background hover:opacity-90 transition-opacity shadow-md"
               aria-label="Upload profile photo"
             >
               <svg
-                xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -205,7 +194,6 @@ export default function Profile() {
               </svg>
             </button>
 
-            {/* Hidden file input */}
             <input
               ref={fileInputRef}
               type="file"
@@ -220,11 +208,19 @@ export default function Profile() {
               {user?.name}
             </h2>
             <p className="text-muted text-sm">{user?.email}</p>
-            <p className="text-muted text-xs mt-1">Member since {joinedDate}</p>
+            <p className="text-muted text-xs mt-1">
+              Member since{" "}
+              {user?.createdAt
+                ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                    month: "long",
+                    year: "numeric",
+                  })
+                : "—"}
+            </p>
           </div>
         </div>
 
-        {/* ── BIOMETRICS CARD ── */}
+        {/* ── BIOMETRICS ── */}
         <div className="bg-card/50 rounded-3xl border border-surface p-6 mb-4">
           <h3 className="text-sm font-bold text-muted uppercase tracking-wider mb-4">
             Biometrics
@@ -308,25 +304,35 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Save Changes button — only visible in edit mode */}
+        {/* Save button — only shown in edit mode */}
         {isEditing && (
           <button
             onClick={handleSave}
-            className="w-full bg-primary text-white font-bold py-4 rounded-xl active:scale-95 transition-all mb-4"
+            disabled={isSaving}
+            className="w-full bg-primary text-white font-bold py-4 rounded-xl active:scale-95 transition-all mb-4 disabled:opacity-60"
           >
-            {saved ? "✓ Saved!" : "Save Changes"}
+            {isSaving ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Saving...</span>
+              </div>
+            ) : saved ? (
+              "✓ Saved!"
+            ) : (
+              "Save Changes"
+            )}
           </button>
         )}
 
-        {/* ── APP INFO CARD ── */}
+        {/* ── APP INFO ── */}
         <div className="bg-card/50 rounded-3xl border border-surface p-6 mb-4">
           <h3 className="text-sm font-bold text-muted uppercase tracking-wider mb-4">
             App
           </h3>
           <div className="space-y-3">
             {[
-              ["Version", "1.0.0 MVP"],
-              ["Data Storage", "Local Device"],
+              ["Version", "2.0.0"],
+              ["Data Storage", "Cloud (MongoDB)"],
               ["Exercise Library", "WGER API"],
             ].map(([k, v], i, arr) => (
               <div key={k}>
