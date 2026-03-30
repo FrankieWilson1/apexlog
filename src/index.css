@@ -1,40 +1,39 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #3B82F6;
-  --color-background: #0F172A;
-  --color-secondary: #10B981;
-  --color-card: #1E293B;
+  --color-primary: #3b82f6;
+  --color-background: #0f172a;
+  --color-secondary: #10b981;
+  --color-card: #1e293b;
   --color-surface: #334155;
   --color-emerald: #10b981;
-  --color-muted: #94A3B8;
-  --color-text-primary: #F8FAFC;
+  --color-muted: #94a3b8;
+  --color-text-primary: #f8fafc;
 
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-
 
 html,
 body,
 #root {
   margin: 0;
   padding: 0;
-  background-color: #0F172A;
+  background-color: #0f172a;
   min-height: 100%;
 }
 
 /* Hide number input arrows for a cleaner UI */
-input[type='number']::-webkit-inner-spin-button,
-input[type='number']::-webkit-outer-spin-button {
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-input[type='number'] {
+input[type="number"] {
   -moz-appearance: textfield;
 }
 
 /* Hide scrollbar but keeps scroll functionality */
-.no-srollbar::-webkit-scrollbar {
+.no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
