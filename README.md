@@ -1,117 +1,175 @@
 # ApexLog — Fitness Tracking, Engineered
 
-![ApexLog](https://img.shields.io/badge/ApexLog-v2.0-3B82F6?style=for-the-badge&logoColor=white)
-![React](https://img.shields.io/badge/React_18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS_v4-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)
+> The workout logger built for serious gym goers.
 
-[🚀**Live Demo:**](https://www.loom.com/share/8dd370988b2149e4acd04d6e309bf0e3)
-
-ApexLog is a data-driven workout tracking web application built as an **ALX Software Engineering Capstone Project**. It allows users to log every set, visualize weekly volume, maintain a workout streak, and review detailed session history — all from a fast, mobile-first interface with no backend required.
+[![Live](https://img.shields.io/badge/Live-apexlog.vercel.app-blue)](https://apexlog-ochre.vercel.app)
+[![React](https://img.shields.io/badge/React-18-61DAFB)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6)](https://www.typescriptlang.org)
+[![Node.js](https://img.shields.io/badge/Node.js-20-339933)](https://nodejs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248)](https://mongodb.com/atlas)
+[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black)](https://vercel.com)
 
 ---
 
-## Table of Contents
+## What is ApexLog?
 
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Architecture Decisions](#architecture-decisions)
-- [API Reference](#api-reference)
-- [Roadmap](#roadmap)
-- [Author](#author)
+Most fitness apps are either too simple or too cluttered. ApexLog is the one
+serious gym goers actually want — minimal, fast, and built around the one thing
+that matters: tracking your progress and watching the numbers go up.
+
+**Built for:**
+
+- Serious gym goers who train 3+ days a week
+- Athletes focused on progressive overload and strength
+- Anyone who wants data-driven progress, not motivation fluff
+
+**What makes it different:**
+
+- Logs every set, rep, and weight in real time — no friction on the gym floor
+- Visualises weekly training volume automatically
+- Cloud-synced across all your devices
+- Mobile-first — built for the gym, not the office
 
 ---
 
 ## Features
 
-### v1.0 — MVP
+### Workout Logging
 
-- ⚡ **Live Workout Logger** — real-time session timer, exercise cards, per-set weight/reps tracking
-- 📊 **Volume Chart** — auto-generated weekly bar chart from workout history (Recharts)
-- 🔐 **Multi-user Auth** — signup, login, logout with localStorage session management
-- 🗂️ **Workout History** — every session persisted and listed on the dashboard
-- 👤 **User Profile** — avatar upload, biometrics (height/weight), fitness goal
+- **Live Workout Logger** — real-time session timer, per-set weight and reps tracking
+- **Exercise Search** — 1,000+ exercises from the WGER API, searchable by name
+- **Workout History** — every session stored, tap any card for full set-by-set breakdown
+- **Workout Detail View** — full breakdown of exercises, sets, reps, weight, and duration
 
-### v2.0 — Current
+### Analytics & Progress
 
-- 🧭 **Smart Navbar** — floating pill nav on desktop; 4-tab + "More ···" slide-up sheet on mobile
-- 🎬 **Onboarding Slideshow** — 5-slide getting-started guide, shown once on first login
-- 📚 **Exercise Library** — browse 1,000+ exercises from the WGER API, filterable by muscle group
-- 🔥 **Streak Counter** — calculates consecutive workout days from real history data
-- 🗂️ **Workout Detail View** — tap any past session for a full set-by-set breakdown
-- 🛡️ **Protected Routes** — unauthenticated users redirected to `/login`
-- ⚙️ **Settings Page** — weight unit toggle, clear history, replay onboarding, logout
-- ✨ **Features + About Pages** — feature showcase, tech stack, version history, roadmap
+- **Volume Chart** — auto-generated weekly bar chart from real workout history
+- **Streak Counter** — consecutive workout days, calculated from actual data
+- **Total Volume** — cumulative kg lifted across all sessions
+
+### User Experience
+
+- **Smart Navbar** — floating pill on desktop, 4-tab bottom nav on mobile
+- **Onboarding Slideshow** — 5-slide first-login guide
+- **Exercise Library** — browse 1,000+ exercises by muscle group without logging
+- **User Profiles** — avatar upload, biometrics (height/weight), fitness goal
+- **Settings** — weight unit (kg/lbs), notifications preference, clear history
+
+### Platform
+
+- **Cloud Sync** — all data stored in MongoDB Atlas, accessible from any device
+- **Secure Auth** — JWT-based authentication, bcrypt password hashing
+- **Protected Routes** — unauthenticated users redirected to login
+- **Multi-user** — each account has fully isolated workout data
 
 ---
 
 ## Tech Stack
 
-| Layer         | Technology      | Purpose                                   |
-| ------------- | --------------- | ----------------------------------------- |
-| UI Framework  | React 18        | Component-based UI with hooks             |
-| Language      | TypeScript      | Full type safety across all files         |
-| Styling       | Tailwind CSS v4 | Utility-first, design-token driven        |
-| Routing       | React Router v6 | Client-side navigation + protected routes |
-| Charts        | Recharts        | Weekly volume bar chart                   |
-| Build Tool    | Vite            | Fast dev server and production bundler    |
-| Exercise Data | WGER REST API   | 1,000+ exercise definitions               |
-| Persistence   | localStorage    | Zero-backend, per-user data isolation     |
-| Deployment    | Vercel          | Automatic CI/CD from GitHub main branch   |
+### Frontend
+
+| Technology      | Purpose                                  |
+| --------------- | ---------------------------------------- |
+| React 18        | UI framework with hooks                  |
+| TypeScript      | Full type safety across all files        |
+| Tailwind CSS v4 | Utility-first styling with design tokens |
+| React Router v6 | Client-side routing + protected routes   |
+| Recharts        | Weekly volume bar chart                  |
+| Vite            | Fast dev server and production bundler   |
+
+### Backend
+
+| Technology      | Purpose                  |
+| --------------- | ------------------------ |
+| Node.js 20      | Server runtime           |
+| Express.js      | REST API framework       |
+| MongoDB Atlas   | Cloud database           |
+| Mongoose        | MongoDB object modelling |
+| JSON Web Tokens | Stateless authentication |
+| bcryptjs        | Password hashing         |
+
+### Deployment
+
+| Service       | Purpose                                 |
+| ------------- | --------------------------------------- |
+| Vercel        | Frontend — auto-deploys on push to main |
+| Render        | Backend — auto-deploys on push to main  |
+| MongoDB Atlas | Database — cloud hosted, M0 free tier   |
+
+### Exercise Data
+
+| Source        | Purpose                                        |
+| ------------- | ---------------------------------------------- |
+| WGER REST API | 1,000+ exercise definitions with muscle groups |
 
 ---
 
 ## Project Structure
 
 ```
-src/
-├── components/                  # Reusable UI components
-│   ├── ExerciseCard.tsx         # Live workout exercise card with set rows + context menu
-│   ├── ExerciseDetailsModal.tsx # Full-screen exercise detail overlay
-│   ├── ExerciseSearch.tsx       # WGER API search modal with debounce
-│   ├── HistoryCard.tsx          # Tappable past workout summary row
-│   ├── NavBar.tsx               # Pill desktop nav + 4-tab mobile bottom bar
-│   ├── ProtectedRoute.tsx       # Auth guard — redirects to /login if unauthenticated
-│   ├── SetRow.tsx               # Individual set input row (weight, reps, complete toggle)
-│   ├── VolumeChart.tsx          # Weekly volume bar chart (Recharts)
-│   └── WorkoutLogger.tsx        # Workout session orchestrator
-│
-├── context/
-│   ├── AuthContext.tsx          # AuthProvider — session state, signup/login/logout
-│   └── useAuth.ts               # useAuth hook (separate file for React Fast Refresh)
-│
-├── data/
-│   └── mockData.ts              # Seed exercises for new workout sessions
-│
-├── hooks/
-│   └── useLocalStorage.ts       # Generic typed hook: useState + localStorage sync
-│
-├── pages/
-│   ├── AboutPage.tsx            # Developer info, tech stack, version history
-│   ├── FeaturesPage.tsx         # Feature showcase + upcoming roadmap
-│   ├── HomeDashboard.tsx        # Main dashboard: greeting, chart, streak, history
-│   ├── LandingPage.tsx          # Public marketing page with hero + CTAs
-│   ├── LibraryPage.tsx          # WGER exercise library with muscle-group filters
-│   ├── LiveLogger.tsx           # Active workout session: timer, exercises, finish
-│   ├── Login.tsx                # Email/password login form
-│   ├── Onboarding.tsx           # 5-slide first-login guide
-│   ├── Profile.tsx              # Profile editor: avatar, biometrics, goal
-│   ├── SettingsPage.tsx         # App preferences + danger zone actions
-│   ├── SignUp.tsx               # Registration form
-│   └── WorkoutDetails.tsx       # Full session breakdown — exercises + sets
-│
-├── types/
-│   └── index.ts                 # All TypeScript interfaces (single source of truth)
-│
-├── utils/
-│   └── WorkoutStats.ts          # Pure functions: streak, total volume, top exercise
-│
-├── App.tsx                      # Route definitions — public + protected
-└── main.tsx                     # Entry point — wraps app in BrowserRouter + AuthProvider
+apexlog/                          # Frontend repository
+├── src/
+│   ├── components/
+│   │   ├── ExerciseCard.tsx      # Live workout exercise card with set rows
+│   │   ├── ExerciseDetailsModal.tsx  # Full-screen exercise detail overlay
+│   │   ├── ExerciseSearch.tsx    # WGER API search modal
+│   │   ├── HistoryCard.tsx       # Tappable past workout summary row
+│   │   ├── NavBar.tsx            # Pill desktop nav + 4-tab mobile bottom bar
+│   │   ├── ProtectedRoute.tsx    # Auth guard — redirects to /login
+│   │   ├── SetRow.tsx            # Individual set input row
+│   │   └── VolumeChart.tsx       # Weekly volume bar chart (Recharts)
+│   ├── config/
+│   │   ├── api.ts                # Base API URL (reads from .env)
+│   │   └── apiHelper.ts          # Centralised fetch wrapper with JWT
+│   ├── context/
+│   │   ├── AuthContext.tsx       # AuthProvider — session state + all auth actions
+│   │   └── useAuth.ts            # useAuth hook (separate for Fast Refresh)
+│   ├── data/
+│   │   └── mockData.ts           # Seed exercises for new workout sessions
+│   ├── hooks/
+│   │   └── useLocalStorage.ts    # Generic typed hook: useState + localStorage sync
+│   ├── pages/
+│   │   ├── AboutPage.tsx         # Product story, tech stack, version history
+│   │   ├── FeaturesPage.tsx      # Feature showcase + roadmap
+│   │   ├── HomeDashboard.tsx     # Main dashboard — chart, streak, history
+│   │   ├── LandingPage.tsx       # Public marketing page with hero + CTAs
+│   │   ├── LibraryPage.tsx       # WGER exercise library with muscle group filters
+│   │   ├── LiveLogger.tsx        # Active workout session — timer, exercises, finish
+│   │   ├── Login.tsx             # Email/password login form
+│   │   ├── Onboarding.tsx        # 5-slide first-login guide
+│   │   ├── Profile.tsx           # Profile editor — avatar, biometrics, goal
+│   │   ├── SettingsPage.tsx      # App preferences + account actions
+│   │   ├── SignUp.tsx            # Registration form
+│   │   └── WorkoutDetails.tsx    # Full session breakdown — exercises + sets
+│   ├── types/
+│   │   └── index.ts              # All TypeScript interfaces (single source of truth)
+│   ├── utils/
+│   │   └── WorkoutStats.ts       # Pure functions: streak, total volume
+│   ├── App.tsx                   # Route definitions — public + protected
+│   └── main.tsx                  # Entry point — BrowserRouter + AuthProvider
+├── .env                          # VITE_API_URL (not committed)
+├── vercel.json                   # Catch-all rewrite for React Router
+└── package.json
+
+apexlog-backend/                  # Backend repository
+├── config/
+│   └── db.js                     # MongoDB connection
+├── controllers/
+│   ├── authController.js         # register, login
+│   ├── userController.js         # getProfile, updateProfile, updatePassword
+│   └── workoutController.js      # CRUD + deleteAllWorkouts
+├── middleware/
+│   └── protect.js                # JWT verification — attaches req.user
+├── models/
+│   ├── User.js                   # User schema with pre-save password hashing
+│   └── Workout.js                # Workout + exercise + set schemas
+├── routes/
+│   ├── auth.js                   # POST /api/auth/*
+│   ├── users.js                  # GET/PUT /api/users/*
+│   └── workouts.js               # GET/POST/DELETE /api/workouts/*
+├── .env                          # PORT, MONGO_URI, JWT_SECRET (not committed)
+├── server.js                     # Entry point — Express app setup
+└── package.json
 ```
 
 ---
@@ -120,89 +178,153 @@ src/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm or yarn
+- MongoDB Atlas account (free M0 tier)
 
-### Installation
+### Frontend Setup
 
 ```bash
-# 1. Clone the repository
+# 1. Clone the frontend repo
 git clone https://github.com/frankiewilson1/apexlog.git
 cd apexlog
 
 # 2. Install dependencies
 npm install
 
-# 3. Start the development server
+# 3. Create environment file
+echo "VITE_API_URL=http://localhost:5000/api" > .env
+
+# 4. Start the development server
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+App available at `http://localhost:5173`.
 
-### Build for Production
+### Backend Setup
 
 ```bash
-npm run build     # TypeScript compile + Vite bundle → dist/
-npm run preview   # Serve the production build locally for testing
+# 1. Clone the backend repo
+git clone https://github.com/frankiewilson1/apexlog-backend.git
+cd apexlog-backend
+
+# 2. Install dependencies
+npm install
+
+# 3. Create environment file — add these values
+touch .env
 ```
 
-### Deployment
-
-The project deploys automatically to Vercel on every push to `main`. The `vercel.json` at the project root configures a catch-all rewrite so React Router handles all navigation without returning 404 on page refresh:
-
-```json
-{
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
-}
+```
+PORT=5000
+MONGO_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_secret_key_here
 ```
 
-No environment variables are required. All user data is stored in the browser's `localStorage`. Exercise data is fetched at runtime from the public [WGER REST API](https://wger.de/api/v2/).
+```bash
+# 4. Start the development server
+npm run dev
+```
+
+API available at `http://localhost:5000`.
+
+### Running Both Together
+
+Open two terminals — one for the frontend, one for the backend.
+The frontend reads `VITE_API_URL` to know where to send requests.
 
 ---
 
-## Architecture Decisions
+## Deployment
 
-### localStorage as the persistence layer
+### Frontend — Vercel
 
-ApexLog intentionally uses `localStorage` rather than a backend database. This was a deliberate capstone decision — it eliminates infrastructure cost, gives instant read/write with no network latency, and keeps the focus on frontend engineering. Each user's workout data is isolated via a user-scoped key (`apexlog_history_${user.id}`). The architecture is designed for a clean migration to a Node.js + MongoDB backend in v3.
+Auto-deploys on every push to `main`. Set this environment variable in
+Vercel project settings:
 
-### Splitting AuthContext and useAuth
+```
+VITE_API_URL=https://your-render-backend-url.onrender.com/api
+```
 
-React Fast Refresh requires that files exporting components must not also export non-component values. `AuthProvider` (a component) lives in `AuthContext.tsx` and `useAuth` (a hook) lives in `useAuth.ts`. This keeps hot module reload working correctly during development.
+The `vercel.json` handles React Router navigation:
 
-### Persistent workout timer
+```json
+{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+```
 
-The Live Logger stores its `startTime` as a Unix timestamp in `localStorage` rather than as a seconds counter in React state. This means the timer survives hot reloads, tab switches, accidental navigation away, and full browser refreshes — all common during a real gym session.
+### Backend — Render
 
-### Per-user data isolation
+Auto-deploys on every push to `main`. Set these environment variables in
+Render service settings:
 
-Every piece of user data is namespaced with the user's ID:
-
-- `apexlog_history_${user.id}` — workout history
-- `apexlog_session` — active session (single logged-in user at a time)
-- `apexlog_users` — all registered accounts map
+```
+PORT=5000
+MONGO_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_production_secret_key
+```
 
 ---
 
 ## API Reference
 
-ApexLog uses the **WGER Workout Manager REST API** for exercise data.
+### Base URL
 
-**Base URL:** `https://wger.de/api/v2/`
+```
+Production: https://your-render-url.onrender.com/api
+Local:      http://localhost:5000/api
+```
 
-| Endpoint         | Method | Description                                                       |
-| ---------------- | ------ | ----------------------------------------------------------------- |
-| `/exerciseinfo/` | GET    | Fetch exercises with full detail (muscles, category, description) |
+### Authentication
 
-**Query parameters used:**
+All protected routes require:
 
-| Parameter  | Value  | Purpose                   |
-| ---------- | ------ | ------------------------- |
-| `language` | `2`    | English results only      |
-| `limit`    | `100`  | Max exercises per request |
-| `format`   | `json` | Response format           |
+```
+Authorization: Bearer <jwt_token>
+```
 
-No API key required. Results are cached in `sessionStorage` as `apexlog_library_cache` to prevent redundant requests within the same browser session.
+### Endpoints
+
+| Method | Endpoint          | Access  | Description                      |
+| ------ | ----------------- | ------- | -------------------------------- |
+| POST   | `/auth/register`  | Public  | Create a new account             |
+| POST   | `/auth/login`     | Public  | Login and receive JWT            |
+| GET    | `/users/profile`  | Private | Get authenticated user's profile |
+| PUT    | `/users/profile`  | Private | Update profile fields            |
+| PUT    | `/users/password` | Private | Change password                  |
+| GET    | `/workouts`       | Private | Get all workouts for the user    |
+| POST   | `/workouts`       | Private | Save a completed workout         |
+| GET    | `/workouts/:id`   | Private | Get a single workout by ID       |
+| DELETE | `/workouts/:id`   | Private | Delete a single workout          |
+| DELETE | `/workouts/all`   | Private | Delete all workouts for the user |
+
+---
+
+## Architecture Decisions
+
+### JWT Authentication
+
+On login, the server issues a signed 30-day JWT. The frontend stores it in
+`localStorage` and attaches it to every API request via the `Authorization`
+header. The `protect` middleware verifies the token on every protected route.
+
+### Session Restore Pattern
+
+On app load, `AuthProvider` restores the session from `localStorage`
+synchronously for an instant render, then fires a background
+`GET /api/users/profile` to replace stale cached data with fresh backend state.
+
+### Persistent Workout Timer
+
+The Live Logger stores `startTime` as a Unix timestamp in `localStorage`
+rather than a seconds counter in state. This means the timer survives hot
+reloads, tab switches, and full page refreshes — all common during a real
+gym session.
+
+### Per-User Data Isolation
+
+Every workout document in MongoDB has a `user` field referencing the owner's
+`_id`. The backend enforces ownership on every query — users can never read
+or modify each other's data.
 
 ---
 
@@ -210,30 +332,55 @@ No API key required. Results are cached in `sessionStorage` as `apexlog_library_
 
 ### v3.0 — Planned
 
-- [ ] Rest timer between sets (configurable seconds)
-- [ ] Personal Records (PRs) — track best weight/reps per exercise
-- [ ] Custom workout templates — save and reuse favourite sessions
-- [ ] Export history to CSV
-- [ ] Dark / Light theme toggle (Settings toggle UI already exists)
+- [ ] Rest timer — configurable between-set countdown with audio alert
+- [ ] Personal Records (PRs) — auto-detected, celebrated, tracked per exercise
+- [ ] Progressive Overload Hints — "last time: 80kg×8, try 82.5kg today"
+- [ ] Workout Templates — save and reuse Push/Pull/Leg day sessions
+- [ ] Cardio & Bodyweight Logging — bike, run, plank, yoga, and more
+- [ ] Body Measurements Tracker — weight, body fat %, circumference trends
+- [ ] Progress Export — shareable image card for social media
+- [ ] Offline Mode — log workouts without WiFi, sync on reconnect
 
-### Future
+### v4.0 — Coming
 
-- [ ] Cloud sync — Node.js + Express + MongoDB backend
-- [ ] Push notifications for rest timer and streak reminders
-- [ ] Social features — friend comparisons and leaderboards
-- [ ] AI-powered workout suggestions based on history
+- [ ] Achievements & Badges — reward consistency, not perfection
+- [ ] Friends & Social Feed — see workout summaries from friends
+- [ ] Challenges — 30-day consistency, volume competitions
+- [ ] Progress Photos — monthly body photo log, private by default
+- [ ] Coach / Trainer Mode — assign programs to clients
+
+### v5.0 — Future
+
+- [ ] AI Workout Suggestions — smart programming from training history
+- [ ] Wearable Integration — Apple Watch, Google Fit, Garmin
+- [ ] Nutrition Tracking — macro awareness, not calorie shaming
+- [ ] Recovery Insights — muscle readiness between sessions
+- [ ] React Native Mobile App — iOS + Android, same backend
+
+---
+
+## Open Source
+
+ApexLog is open source and built in public.
+
+- **Frontend:** https://github.com/frankiewilson1/apexlog
+- **Backend:** https://github.com/frankiewilson1/apexlog-backend
+
+Contributions, feedback, and stars are always welcome.
 
 ---
 
 ## Author
 
-**Frank Williams Ugwu**
-ALX Software Engineering Graduate
+**Frank Williams Ugwu** — Full-Stack Developer
 
-[![GitHub](https://img.shields.io/badge/GitHub-frankiewilson1-181717?style=flat&logo=github)](https://github.com/frankiewilson1)
+[![GitHub](https://img.shields.io/badge/GitHub-frankiewilson1-black)](https://github.com/frankiewilson1)
 
-> _"ApexLog was built to solve a real problem: most fitness apps are either too simple or too cluttered. ApexLog is minimal, fast, and engineered around the one thing that actually matters — logging your lifts and watching the numbers go up."_
+> _"ApexLog was built to solve a real problem: most fitness apps are either
+> too simple or too cluttered. ApexLog is minimal, fast, and engineered around
+> the one thing that actually matters — logging your lifts and watching the
+> numbers go up."_
 
 ---
 
-_ApexLog v2.0 · ALX Capstone Project · Built with React + TypeScript + Tailwind CSS_
+_ApexLog v2.0 · Built with React + TypeScript + Node.js + MongoDB_
