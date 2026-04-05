@@ -245,7 +245,7 @@ export default function AboutPage() {
         </div>
 
         {/* ── OPEN SOURCE CTA ── */}
-        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-900/5 rounded-3xl border border-emerald-500/20 p-8 text-center mb-12">
+        <div className="bg-gradient-to-br from-primary/20 to-blue-900/10 rounded-3xl border border-primary/20 p-8 text-center mb-12">
           <h3 className="text-xl font-bold text-text-primary mb-2">
             Open Source
           </h3>
@@ -257,7 +257,7 @@ export default function AboutPage() {
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <button
               onClick={() => navigate("/dashboard")}
-              className="bg-emerald-500 text-white px-8 py-3.5 rounded-2xl font-bold active:scale-95 transition-all hover:bg-emerald-500/90 text-sm"
+              className="bg-primary text-white px-8 py-3.5 rounded-2xl font-bold active:scale-95 transition-all hover:bg-primary/90 text-sm"
             >
               Back to Dashboard
             </button>
@@ -265,7 +265,7 @@ export default function AboutPage() {
               href="https://github.com/frankiewilson1/apexlog"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-surface text-text-primary px-8 py-3.5 rounded-2xl font-bold active:scale-95 transition-all hover:bg-surface/80 text-sm border border-surface"
+              className="border border-white/15 text-white px-8 py-3.5 rounded-2xl font-bold active:scale-95 transition-all hover:border-white/30 text-sm"
             >
               View on GitHub
             </a>
