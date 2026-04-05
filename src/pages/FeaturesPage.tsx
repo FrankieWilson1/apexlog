@@ -173,19 +173,19 @@ const ROADMAP = [
   },
 ];
 
-const VERSION_COLORS = {
-  v3: {
-    dot: "bg-primary",
-    label: "text-primary",
-    bg: "bg-primary/10 border-primary/20",
-  },
-  v4: {
-    dot: "bg-violet-400",
-    label: "text-violet-400",
-    bg: "bg-violet-400/10 border-violet-400/20",
-  },
-  v5: { dot: "bg-muted", label: "text-muted", bg: "bg-surface border-surface" },
-};
+// const VERSION_COLORS = {
+//   v3: {
+//     dot: "bg-primary",
+//     label: "text-primary",
+//     bg: "bg-primary/10 border-primary/20",
+//   },
+//   v4: {
+//     dot: "bg-violet-400",
+//     label: "text-violet-400",
+//     bg: "bg-violet-400/10 border-violet-400/20",
+//   },
+//   v5: { dot: "bg-muted", label: "text-muted", bg: "bg-surface border-surface" },
+// };
 
 export default function FeaturesPage() {
   const navigate = useNavigate();
