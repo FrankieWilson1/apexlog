@@ -19,7 +19,7 @@
  * @module pages/SettingsPage
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { useLocalStorage } from "../hooks/useLocalStorage";
@@ -56,6 +56,19 @@ export default function SettingsPage() {
     false,
   );
 
+  // Restduration state declaration
+  const [restDuration, setRestDuration] = useState<number>(
+    user?.restDuration ?? 90,
+  );
+
+  useEffect(() => {
+    if (user) {
+        setWeightUnit(user.weightUnit || "kg");
+        setNotifications(user.notifications ?? true);
+        setRestDuration(user.restDuration ?? 90);
+    }
+  }, [user]);
+
   // ── Confirmation flags ────────────────────────────────────────────────────
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -71,6 +84,11 @@ export default function SettingsPage() {
     setWeightUnit(unit);
     await updateProfile({ weightUnit: unit });
   };
+
+  const handleRestDurationChange = async (seconds: number) => {
+    setRestDuration(seconds);
+    await updateProfile({ restDuration: seconds })
+  }
 
   /**
    * Persists the notification preference to the backend immediately.
@@ -246,6 +264,33 @@ export default function SettingsPage() {
                 value={notifications}
                 onToggle={handleNotificationsToggle}
               />
+            </div>
+
+            {/* Rest duration - saved to backend */}
+            <div className="flex items-center justify-between px-5 py-4">
+                <div>
+                    <p className="text-text-primary font-semibold text-sm">
+                    Default Rest Timer
+                    </p>
+                    <p className="text-muted text-xs mt-0.5">
+                    Auto-starts after completing a set
+                    </p>
+                </div>
+                <div className="flex items-center gap-1 bg-surface rounded-xl p-1">
+                    {([60, 90, 120, 180] as const).map((seconds) => (
+                    <button
+                        key={seconds}
+                        onClick={() => handleRestDurationChange(seconds)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        restDuration === seconds
+                            ? "bg-primary text-white"
+                            : "text-muted"
+                        }`}
+                    >
+                        {seconds}s
+                    </button>
+                    ))}
+                </div>
             </div>
 
             {/* Compact view — localStorage only */}
