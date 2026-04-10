@@ -25,6 +25,7 @@ import { useAuth } from "../context/useAuth";
 import type { WorkoutSummary } from "../types";
 import { useEffect, useState } from "react";
 import apiFetch from "../config/apiHelper";
+import LoadingScreen from "../components/LoadingScreen";
 
 /**
  * WorkoutDetail
@@ -65,16 +66,7 @@ export default function WorkoutDetail() {
   }, [token, id]);
 
   // ── Not-found guard ───────────────────────────────────────────────────────
-  if (isLoading) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: "#0F172A" }}
-      >
-        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingScreen />;
 
   if (error || !workout) {
     return (

@@ -65,6 +65,20 @@ export default function RestTimer({ duration, onDismiss }: RestTimerProps) {
 
   // ── Countdown effect ───────────────────────────────────────────────
   useEffect(() => {
+    let wakeLock: WakeLockSentinel | null = null;
+
+    // Request wake lock to keep screen on
+    const requestWakeLock = async () => {
+      if ("wakeLock" in navigator) {
+        try {
+          wakeLock = await navigator.wakeLock.request("screen");
+        } catch (error) {
+          console.error("Wake Lock failed:", error);
+        }
+      }
+    };
+    requestWakeLock();
+
     intervalRef.current = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
@@ -82,6 +96,8 @@ export default function RestTimer({ duration, onDismiss }: RestTimerProps) {
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      // Release the wake lock when timer unounts
+      if (wakeLock) wakeLock.release();
     };
   }, []);
 

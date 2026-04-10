@@ -33,6 +33,7 @@
 
 import { useState, useEffect } from "react";
 import type { WgerExercise } from "../types";
+import LoadingScreen from "../components/LoadingScreen";
 
 /** Filter chip definitions — value is matched against category and muscle names */
 const FILTER_CHIPS = [
@@ -215,7 +216,7 @@ export default function LibraryPage() {
         {loading ? (
           /* Loading spinner */
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <LoadingScreen />
             <p className="text-muted text-sm">Loading exercise library...</p>
           </div>
         ) : filtered.length === 0 ? (
