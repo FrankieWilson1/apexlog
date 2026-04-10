@@ -41,3 +41,24 @@ input[type="number"] {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Custom Dumbbell loading Animation */
+@keyframes curl {
+  0% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-60deg);
+  }
+  60% {
+    transform: rotate(-60deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-curl {
+  animation: curl 1.8s ease-in-out infinite;
+  transform-origin: bottom right;
+}

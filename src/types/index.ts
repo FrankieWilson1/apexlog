@@ -72,6 +72,7 @@ export interface AuthUser {
     avatar?: string | null;
     /** ISO date string from MongoDB's createdAt timestamp */
     createdAt?: string;
+    restDuration?: number;
 }
 
 /** Shape of the global auth context exposed to all components */

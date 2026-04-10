@@ -73,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     notifications: data.notifications,
     hasOnboarded: data.hasOnboarded,
     createdAt: data.createdAt,
+    restDuration: data.restDuration,
   });
 
   /** Persists a user and token to both localStorage and React state */

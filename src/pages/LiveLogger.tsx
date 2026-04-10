@@ -42,6 +42,7 @@ import {
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useAuth } from "../context/useAuth";
 import apiFetch from "../config/apiHelper";
+import RestTimer from "../components/RestTimer";
 
 /**
  * LiveLogger
@@ -52,7 +53,9 @@ import apiFetch from "../config/apiHelper";
  */
 export default function LiveLogger() {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const restDuration = user?.restDuration ?? 90;
+  const [showRestTimer, setShowRestTimer] = useState(false);
 
   /** The in-progress workout — array of exercises with their sets */
   const [activeWorkout, setActiveWorkout] = useLocalStorage<LoggedExercise[]>(
@@ -135,13 +138,18 @@ export default function LiveLogger() {
    *
    * @param {string} setId - The id of the set to toggle.
    */
+
   const handleToggleSetComplete = (setId: string) => {
     setActiveWorkout((prev) =>
       prev.map((ex) => ({
         ...ex,
-        sets: ex.sets.map((set) =>
-          set.id === setId ? { ...set, isCompleted: !set.isCompleted } : set,
-        ),
+        sets: ex.sets.map((set) => {
+          if (set.id !== setId) return set;
+          const nowComplete = !set.isCompleted;
+          // Only show rest timer when marking a set AS complete
+          if (nowComplete) setShowRestTimer(true);
+          return { ...set, isCompleted: nowComplete };
+        }),
       })),
     );
   };
@@ -448,6 +456,14 @@ export default function LiveLogger() {
         <ExerciseSearch
           onClose={() => setIsSearchModalOpen(false)}
           onSelectExercise={handleAddNewExercise}
+        />
+      )}
+
+      {/* Rest timer — slides up when a set is completed */}
+      {showRestTimer && (
+        <RestTimer
+          duration={restDuration}
+          onDismiss={() => setShowRestTimer(false)}
         />
       )}
     </div>

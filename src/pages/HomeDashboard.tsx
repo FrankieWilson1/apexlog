@@ -15,6 +15,7 @@ import { useAuth } from "../context/useAuth";
 import type { WorkoutSummary } from "../types";
 import { calculateStreak, calculateTotalVolume } from "../utils/WorkoutStats";
 import apiFetch from "../config/apiHelper";
+import LoadingScreen from "../components/LoadingScreen";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -204,19 +205,7 @@ export default function HomeDashboard() {
 
   // __________________ Loading state ____________________________________
 
-  if (isLoading) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: "#0F172A" }}
-      >
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted text-sm">Loading your workouts...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingScreen message="Loading your workouts..." />;
 
   // ____ Error state ______________________________________________________
 

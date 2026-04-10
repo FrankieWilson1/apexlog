@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import LoadingScreen from "./LoadingScreen";
 
 export default function ProtectedRoute({
   children,
@@ -10,14 +11,7 @@ export default function ProtectedRoute({
 
   // Wait for session restore to complete before deciding
   if (isLoading) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: "#0F172A" }}
-      >
-        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingScreen message="Loading your session..." />;
   }
 
   if (!isAuthenticated) return <Navigate to="/login" />;
