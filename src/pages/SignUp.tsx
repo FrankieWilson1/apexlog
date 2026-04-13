@@ -107,7 +107,14 @@ export default function Signup() {
 
         {/* OAuth placeholders */}
         <div className="flex flex-col gap-3">
-          <button className="w-full flex items-center justify-center gap-3 bg-surface border border-white/10 text-white font-semibold py-3.5 rounded-xl hover:bg-surface/80 active:scale-95 transition-all">
+          <button
+            onClick={() =>
+              alert(
+                "Social login is comming soon! Please use email/password for now.",
+              )
+            }
+            className="w-full flex items-center justify-center gap-3 bg-surface border border-white/10 text-white font-semibold py-3.5 rounded-xl hover:bg-surface/80 active:scale-95 transition-all opacity-70"
+          >
             <img
               src="https://www.google.com/favicon.ico"
               alt="Google"
@@ -115,7 +122,14 @@ export default function Signup() {
             />
             Continue with Google
           </button>
-          <button className="w-full flex items-center justify-center gap-3 bg-surface border border-white/10 text-white font-semibold py-3.5 rounded-xl hover:bg-surface/80 active:scale-95 transition-all">
+          <button
+            onClick={() =>
+              alert(
+                "Social login is comming soon! Please use email/password for now.",
+              )
+            }
+            className="w-full flex items-center justify-center gap-3 bg-surface border border-white/10 text-white font-semibold py-3.5 rounded-xl hover:bg-surface/80 active:scale-95 transition-all opacity-70"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5"
