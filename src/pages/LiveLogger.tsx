@@ -165,10 +165,11 @@ export default function LiveLogger() {
     setActiveWorkout((prev) =>
       prev.map((ex) => {
         if (ex.id !== exerciseId) return ex;
+        const previousStr = ex.sets[0]?.previousStr || "-";
         const newSet: ExerciseSet = {
           id: `s-new-${Date.now()}`,
           setNumber: ex.sets.length + 1,
-          previousStr: "-",
+          previousStr,
           weight: "",
           reps: "",
           isCompleted: false,
@@ -186,7 +187,29 @@ export default function LiveLogger() {
    *
    * @param {ExerciseDefinition} exerciseDef - The exercise selected from search.
    */
-  const handleAddNewExercise = (exerciseDef: ExerciseDefinition) => {
+  const handleAddNewExercise = async (exerciseDef: ExerciseDefinition) => {
+    // Fetch workout history to find previous performance for this exercise
+    let previousStr = "-";
+    try {
+      const history = await apiFetch("/workouts", token);
+      // Search through past workouts for the most recent instance of this exercise.
+      for (const workout of history) {
+        const match = workout.exercises?.find(
+          (ex: any) => ex.name.toLowerCase() === exerciseDef.name.toLowerCase(),
+        );
+        if (match && match.sets?.length > 0) {
+          // Use the last completed set from that session
+          const lastSet = match.sets[match.sets.length - 1];
+          if (lastSet.weight && lastSet.reps && Number(lastSet.weight) > 0) {
+            previousStr = `${lastSet.weight}kg x ${lastSet.reps}`;
+          }
+          break; // Found the most recent then stop searching
+        }
+      }
+    } catch {
+      // Fail silently - previousStr stays as "-"
+    }
+
     const newEx: LoggedExercise = {
       id: `log-${Date.now()}`,
       name: exerciseDef.name,
@@ -195,7 +218,7 @@ export default function LiveLogger() {
         {
           id: `s-new-${Date.now()}`,
           setNumber: 1,
-          previousStr: "-",
+          previousStr,
           weight: "",
           reps: "",
           isCompleted: false,
@@ -401,11 +424,12 @@ export default function LiveLogger() {
           {/* Desktop dashed "Add Exercise" card */}
           <button
             onClick={() => setIsSearchModalOpen(true)}
-            className="hidden lg:flex items-center justify-center w-full rounded-2xl font-bold py-8 transition-colors min-h-[160px]"
+            className="hidden lg:flex items-center justify-center w-full rounded-2xl font-bold transition-colors"
             style={{
               border: "2px dashed #334155",
               color: "#3B82F6",
               backgroundColor: "transparent",
+              minHeight: activeWorkout.length === 0 ? "200px" : "100%",
             }}
             onMouseEnter={(e) =>
               (e.currentTarget.style.backgroundColor = "#1E293B")
