@@ -105,34 +105,34 @@ export default function Signup() {
           </p>
         </div>
 
-        {/* OAuth placeholders */}
+        {/* OAuth — coming soon */}
         <div className="flex flex-col gap-3">
           <button
             onClick={() =>
               alert(
-                "Social login is comming soon! Please use email/password for now.",
+                "Google login is coming soon. Please create an account manually for now.",
               )
             }
-            className="w-full flex items-center justify-center gap-3 bg-surface border border-white/10 text-white font-semibold py-3.5 rounded-xl hover:bg-surface/80 active:scale-95 transition-all opacity-70"
+            className="w-full flex items-center justify-center gap-3 bg-surface border border-white/10 text-white font-semibold py-3.5 rounded-xl transition-all opacity-60 cursor-not-allowed"
           >
             <img
               src="https://www.google.com/favicon.ico"
               alt="Google"
-              className="w-5 h-5"
+              className="w-5 h-5 opacity-60"
             />
             Continue with Google
           </button>
           <button
             onClick={() =>
               alert(
-                "Social login is comming soon! Please use email/password for now.",
+                "Apple login is coming soon. Please create an account manually for now.",
               )
             }
-            className="w-full flex items-center justify-center gap-3 bg-surface border border-white/10 text-white font-semibold py-3.5 rounded-xl hover:bg-surface/80 active:scale-95 transition-all opacity-70"
+            className="w-full flex items-center justify-center gap-3 bg-surface border border-white/10 text-white font-semibold py-3.5 rounded-xl transition-all opacity-60 cursor-not-allowed"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
+              className="h-5 w-5 opacity-60"
               viewBox="0 0 24 24"
               fill="currentColor"
             >

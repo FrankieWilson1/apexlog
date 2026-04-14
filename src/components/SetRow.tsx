@@ -22,6 +22,7 @@
  */
 
 import type { SetRowProps } from "../types";
+import { calculateOverload } from "../utils/Overload";
 
 /**
  * SetRow
@@ -68,6 +69,9 @@ export default function SetRow({
     onToggleComplete(set.id);
   };
 
+  // Calculate the smart suggestion on the fly
+  const suggestion = calculateOverload(set.previousStr);
+
   return (
     <div
       className={`grid grid-cols-[40px_1fr_60px_60px_40px] gap-2 items-center py-2 transition-colors duration-300 ${
@@ -77,10 +81,19 @@ export default function SetRow({
       {/* Set number indicator */}
       <span className="text-white font-bold text-center">{set.setNumber}</span>
 
-      {/* Previous performance — shows last logged weight × reps for this exercise */}
-      <span className="text-muted text-sm font-mono truncate">
-        {set.previousStr || "-"}
-      </span>
+      {/* Previous performance & suggestion */}
+      <div className="flex flex-col justify-center min-w-0">
+        <span className="text-muted text-sm font-mono truncate leading-tight">
+          {set.previousStr || "-"}
+        </span>
+
+        {/* Only show the suggestion if one exists and the set isn't completed yet */}
+        {suggestion !== "-" && !set.isCompleted && (
+          <span className="text-primary text-[10px] font-bold tracking-wide truncate mt-0.5">
+            ↑ {suggestion}
+          </span>
+        )}
+      </div>
 
       {/* Weight input — disabled once the set is marked complete */}
       <input
