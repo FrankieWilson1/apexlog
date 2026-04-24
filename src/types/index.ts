@@ -178,3 +178,31 @@ export interface Slide {
     /** Numbered step list — only used on slides 2 and 3 */
     steps?: string[];
 }
+
+//_____________________________________________
+// PRCelebration 
+//_____________________________________________
+export interface PRCelebrations {
+    newPRs: string[];
+    onDismiss: () => void;
+}
+
+//______________________________________________
+// PR
+//_______________________________________________
+export interface PR {
+    _id: string;
+    exerciseName: string;
+    weight: number;
+    reps: number;
+    volume: number;
+    date: string;
+}
+
+//______________________________________________
+// hasPR
+//______________________________________________
+export interface HistoryCardProps {
+    workout: WorkoutSummary;
+    hasPR?: boolean;
+}

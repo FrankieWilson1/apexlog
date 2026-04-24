@@ -2,25 +2,9 @@
  * @file NavBar.tsx
  * @description Application-wide navigation bar for ApexLog.
  *
- * Renders two distinct navigation layouts depending on viewport size:
- *
- * - **Desktop (lg+):** A floating, glassmorphic pill centered at the top of the
- *   screen. Contains the logo, three centre links (Features, Library, About),
- *   a Settings gear icon (app pages only), and a "Start Training" CTA button.
- *
- * - **Mobile (<lg):** A fixed bottom tab bar with 4 core tabs (Dashboard,
- *   Features, Library, Profile) and a "More ···" button that opens a smooth
- *   slide-up sheet containing About and Settings.
- *
- * ## Visibility rules
- * The NavBar is **hidden** on `/login`, `/signup`, `/onboarding`, and `/logger`
- * — pages that are either full-screen flows or have their own headers.
- * It renders on `/` (landing page) and all authenticated app pages.
- *
- * ## Spacing contract
- * The NavBar does **not** inject spacer divs. Each page is responsible for
- * its own top padding (`lg:pt-28`) to clear the floating desktop pill.
- * On mobile, a single `80px` spacer div clears the bottom tab bar.
+ * Desktop: floating pill — Logo | Features | Library | About | Start Training
+ * Mobile: 4-tab bottom bar — Dashboard | Log | Library | Profile
+ *         + More sheet — Records | About | Settings
  *
  * @module components/NavBar
  */
@@ -50,8 +34,8 @@ const CORE_TABS = [
     ),
   },
   {
-    label: "Features",
-    path: "/features",
+    label: "Log",
+    path: "/logger",
     icon: (active: boolean) => (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -61,11 +45,7 @@ const CORE_TABS = [
         stroke="currentColor"
         strokeWidth={active ? 0 : 1.8}
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M13 10V3L4 14h7v7l9-11h-7z"
-        />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
       </svg>
     ),
   },
@@ -112,6 +92,46 @@ const CORE_TABS = [
 ];
 
 const MORE_ITEMS = [
+  {
+    label: "Records",
+    path: "/records",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-5 w-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Features",
+    path: "/features",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-5 w-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
+      </svg>
+    ),
+  },
   {
     label: "About",
     path: "/about",
@@ -162,6 +182,7 @@ const MORE_ITEMS = [
 const DESKTOP_LINKS = [
   { label: "Features", path: "/features" },
   { label: "Library", path: "/library" },
+  { label: "Records", path: "/records" },
   { label: "About", path: "/about" },
 ];
 
@@ -170,6 +191,7 @@ export default function NavBar() {
   const { pathname } = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
 
+  // Hide on full-screen flows — logger has its own header
   const hideOn = ["/login", "/signup", "/onboarding", "/logger"];
   if (hideOn.includes(pathname)) return null;
 
@@ -184,14 +206,7 @@ export default function NavBar() {
 
   return (
     <>
-      {/* ══════════════════════════════════════════════════════════════════
-          DESKTOP PILL NAV
-          FIX: Removed hard minWidth. Pill now auto-sizes to its content.
-          Tightened internal gaps (gap-0.5, px-3) so it breathes at
-          all laptop widths (1024px+) without items cramping together.
-          A second separator was added between the links and right side
-          to give clearer visual grouping at smaller viewports.
-      ══════════════════════════════════════════════════════════════════ */}
+      {/* ── DESKTOP PILL ── */}
       <nav
         className="hidden lg:flex fixed top-5 left-1/2 -translate-x-1/2 z-50 items-center px-2 py-1.5 rounded-full"
         style={{
@@ -205,7 +220,7 @@ export default function NavBar() {
           gap: "2px",
         }}
       >
-        {/* ── Logo ── */}
+        {/* Logo */}
         <button
           onClick={() => navigate(isLanding ? "/" : "/dashboard")}
           className="text-sm font-bold text-white px-3 py-2 rounded-full transition-colors flex-shrink-0"
@@ -230,7 +245,7 @@ export default function NavBar() {
           }}
         />
 
-        {/* ── Centre links ── */}
+        {/* Centre links */}
         {DESKTOP_LINKS.map((item) => {
           const active = isActive(item.path);
           return (
@@ -276,57 +291,8 @@ export default function NavBar() {
           }}
         />
 
-        {/* ── Right side: Settings gear + CTA ── */}
+        {/* CTA */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          {!isLanding && (
-            <button
-              onClick={() => navigate("/settings")}
-              title="Settings"
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-              style={{
-                color: isActive("/settings")
-                  ? "#ffffff"
-                  : "rgba(255,255,255,0.4)",
-                backgroundColor: isActive("/settings")
-                  ? "rgba(255,255,255,0.12)"
-                  : "transparent",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.color = "#ffffff";
-                (e.currentTarget as HTMLElement).style.backgroundColor =
-                  "rgba(255,255,255,0.08)";
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive("/settings")) {
-                  (e.currentTarget as HTMLElement).style.color =
-                    "rgba(255,255,255,0.4)";
-                  (e.currentTarget as HTMLElement).style.backgroundColor =
-                    "transparent";
-                }
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.8}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </button>
-          )}
-
           <button
             onClick={() => navigate(isLanding ? "/signup" : "/logger")}
             className="px-4 py-2 rounded-full text-sm font-bold text-white transition-all active:scale-95 flex-shrink-0"
@@ -345,9 +311,7 @@ export default function NavBar() {
         </div>
       </nav>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          MOBILE BOTTOM NAV + MORE SHEET (unchanged)
-      ══════════════════════════════════════════════════════════════════ */}
+      {/* ── MOBILE BOTTOM NAV + MORE SHEET ── */}
       {!isLanding && (
         <>
           {moreOpen && (
@@ -361,10 +325,11 @@ export default function NavBar() {
             />
           )}
 
+          {/* More sheet */}
           <div
             className="lg:hidden fixed left-4 right-4 z-50 rounded-2xl overflow-hidden transition-all duration-300"
             style={{
-              bottom: moreOpen ? "90px" : "-200px",
+              bottom: moreOpen ? "90px" : "-300px",
               backgroundColor: "#1E293B",
               border: "1px solid rgba(255,255,255,0.08)",
               boxShadow: "0 -8px 40px rgba(0,0,0,0.5)",
@@ -420,6 +385,7 @@ export default function NavBar() {
             ))}
           </div>
 
+          {/* Bottom tab bar */}
           <nav
             className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 pt-2 pb-5"
             style={{

@@ -21,6 +21,7 @@ import FeaturesPage from "./pages/FeaturesPage";
 import LibraryPage from "./pages/LibraryPage";
 import AboutPage from "./pages/AboutPage";
 import SettingsPage from "./pages/SettingsPage";
+import RecordsPage from "./pages/RecordsPage";
 
 export default function App() {
   return (
@@ -108,6 +109,16 @@ export default function App() {
           element={
             <ProtectedRoute>
               <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* v3 PR*/}
+        <Route
+          path="/records"
+          element={
+            <ProtectedRoute>
+              <RecordsPage />
             </ProtectedRoute>
           }
         />

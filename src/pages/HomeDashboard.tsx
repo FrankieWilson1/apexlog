@@ -77,6 +77,7 @@ interface ActivityListProps {
   history: WorkoutSummary[];
   /** Called when the user taps the "Start your first workout" CTA */
   onNavigate: () => void;
+  prDates: Set<string>;
 }
 
 /**
@@ -85,7 +86,7 @@ interface ActivityListProps {
  * Renders a scrollable list of `HistoryCard` rows, or an empty-state prompt
  * with a CTA if the user has no workouts yet.
  */
-function ActivityList({ history, onNavigate }: ActivityListProps) {
+function ActivityList({ history, onNavigate, prDates }: ActivityListProps) {
   if (history.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -104,7 +105,11 @@ function ActivityList({ history, onNavigate }: ActivityListProps) {
   return (
     <div>
       {history.map((workout) => (
-        <HistoryCard key={workout.id} workout={workout} />
+        <HistoryCard
+          key={workout.id}
+          workout={workout}
+          hasPR={prDates.has(workout.date)}
+        />
       ))}
     </div>
   );
@@ -129,6 +134,7 @@ export default function HomeDashboard() {
   const [history, setHistory] = useState<WorkoutSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [prDates, setPRDates] = useState<Set<string>>(new Set());
 
   /**
    * Fetch workout history from the backend on mount.
@@ -139,6 +145,11 @@ export default function HomeDashboard() {
       try {
         setIsLoading(true);
         const data = await apiFetch("/workouts", token);
+        const prs = await apiFetch("/prs", token);
+
+        // Build a set of dates that had PRs
+        const fetchedPRDates = new Set<string>(prs.map((pr: any) => pr.date));
+        setPRDates(fetchedPRDates);
 
         // Map MongoDB _id to id for compatibility with existing components
         const mapped: WorkoutSummary[] = data.map((w: any) => ({
@@ -293,6 +304,7 @@ export default function HomeDashboard() {
             <ActivityList
               history={history}
               onNavigate={() => navigate("/logger")}
+              prDates={prDates}
             />
           </div>
 
@@ -378,7 +390,11 @@ export default function HomeDashboard() {
 
                 <div className="flex-1 overflow-y-auto no-scrollbar">
                   {history.map((workout) => (
-                    <HistoryCard key={workout.id} workout={workout} />
+                    <HistoryCard
+                      key={workout.id}
+                      workout={workout}
+                      hasPR={prDates.has(workout.date)}
+                    />
                   ))}
                 </div>
               )}

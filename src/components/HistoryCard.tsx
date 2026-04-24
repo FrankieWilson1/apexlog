@@ -13,26 +13,9 @@
  */
 
 import { useNavigate } from "react-router-dom";
-import type { WorkoutSummary } from "../types";
+import type { HistoryCardProps } from "../types";
 
-interface HistoryCardProps {
-  /** The workout session data to display */
-  workout: WorkoutSummary;
-}
-
-/**
- * HistoryCard
- *
- * Renders a single past workout as a tappable list row. Tapping navigates
- * to the full `WorkoutDetail` page for that session.
- *
- * @param {HistoryCardProps} props
- * @param {WorkoutSummary}   props.workout - The workout summary to display.
- *
- * @example
- * <HistoryCard workout={workout} />
- */
-export default function HistoryCard({ workout }: HistoryCardProps) {
+export default function HistoryCard({ workout, hasPR }: HistoryCardProps) {
   const navigate = useNavigate();
 
   return (
@@ -41,10 +24,29 @@ export default function HistoryCard({ workout }: HistoryCardProps) {
       className="w-full text-left py-4 border-b border-surface last:border-b-0 hover:bg-surface/20 active:bg-surface/40 transition-colors rounded-lg px-1 -mx-1"
       aria-label={`View details for ${workout.title} on ${workout.date}`}
     >
-      {/* ── Row 1: title + date ── */}
+      {/* ── Row 1: title + date + PR badge ── */}
       <div className="flex justify-between items-center mb-1">
-        <h3 className="text-white font-bold text-lg">{workout.title}</h3>
-        <span className="text-muted text-sm">{workout.date}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <h3 className="text-white font-bold text-lg truncate">
+            {workout.title}
+          </h3>
+          {/* PR badge — only shown when this session set a new record */}
+          {hasPR && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+              style={{
+                backgroundColor: "rgba(251,191,36,0.12)",
+                color: "#FBB124",
+                border: "1px solid rgba(251,191,36,0.25)",
+              }}
+            >
+              🏆 PR
+            </span>
+          )}
+        </div>
+        <span className="text-muted text-sm flex-shrink-0 ml-2">
+          {workout.date}
+        </span>
       </div>
 
       {/* ── Row 2: volume · duration · exercise count ── */}
@@ -52,8 +54,6 @@ export default function HistoryCard({ workout }: HistoryCardProps) {
         <span>{workout.volumeKg.toLocaleString()} kg Volume</span>
         <span className="text-surface">•</span>
         <span>{workout.durationMinutes}m</span>
-
-        {/* Exercise count is only shown when the exercises snapshot exists */}
         {workout.exercises && workout.exercises.length > 0 && (
           <>
             <span className="text-surface">•</span>
