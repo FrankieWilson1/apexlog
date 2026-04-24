@@ -33,7 +33,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExerciseCard from "../components/ExerciseCard";
 import ExerciseSearch from "../components/ExerciseSearch";
-import { mockLiveWorkouts } from "../data/mockData";
 import {
   type LoggedExercise,
   type ExerciseSet,
@@ -43,6 +42,7 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useAuth } from "../context/useAuth";
 import apiFetch from "../config/apiHelper";
 import RestTimer from "../components/RestTimer";
+import PRCelebration from "../components/PRCelebration";
 
 /**
  * LiveLogger
@@ -56,12 +56,20 @@ export default function LiveLogger() {
   const { token, user } = useAuth();
   const restDuration = user?.restDuration ?? 90;
   const [showRestTimer, setShowRestTimer] = useState(false);
+  const [newPRs, setNewPRs] = useState<string[]>([]);
+  const [showPRCelebration, setShowPRCelebration] = useState(false);
 
   /** The in-progress workout — array of exercises with their sets */
   const [activeWorkout, setActiveWorkout] = useLocalStorage<LoggedExercise[]>(
     "apexlog_active_workout",
-    mockLiveWorkouts,
+    [],
   );
+
+  // Resets PR state when the logger mounts
+  useEffect(() => {
+    setShowPRCelebration(false);
+    setNewPRs([]);
+  }, []);
 
   /**
    * Wall-clock start time stored in localStorage.
@@ -287,7 +295,7 @@ export default function LiveLogger() {
     };
 
     try {
-      await apiFetch("/workouts", token, {
+      const response = await apiFetch("/workouts", token, {
         method: "POST",
         body: JSON.stringify(workoutData),
       });
@@ -296,7 +304,14 @@ export default function LiveLogger() {
       setActiveWorkout([]);
       localStorage.removeItem("apexlog_workout_start");
       setStartTime(Date.now());
-      navigate("/dashboard");
+
+      // Show PR celebration if any new PRs were detected
+      if (response.newPRs && response.newPRs.length > 0) {
+        setNewPRs(response.newPRs);
+        setShowPRCelebration(true);
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
       alert("Failed to save workout. Please try again.");
       console.error(error);
@@ -330,6 +345,23 @@ export default function LiveLogger() {
   };
 
   /**
+   * handleRemoveLastSet
+   *
+   * Removes exercise sets from the active workout by id.
+   *
+   * @param {string} exerciseId - The exercise ID.
+   */
+  const handleRemoveLastSet = (exerciseId: string) => {
+    setActiveWorkout((prev) =>
+      prev.map((ex) => {
+        if (ex.id !== exerciseId) return ex;
+        if (ex.sets.length <= 1) return ex; // Ignore if the last sets
+        return { ...ex, sets: ex.sets.slice(0, -1) };
+      }),
+    );
+  };
+
+  /**
    * formatTime
    *
    * Formats a raw seconds count as a zero-padded `MM:SS` string for the
@@ -342,6 +374,16 @@ export default function LiveLogger() {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  /**
+   * handlePRDismiss
+   *
+   * Dismisses PRs and navigates to dashboard
+   */
+  const handlePRDismiss = () => {
+    setShowPRCelebration(false);
+    navigate("/dashboard");
   };
 
   return (
@@ -405,23 +447,10 @@ export default function LiveLogger() {
           Finish
         </button>
       </div>
-
       {/* ── EXERCISE CARDS GRID ── */}
       <div className="px-3 pt-3 pb-4 lg:px-10 lg:py-8 mx-auto max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-6">
-          {activeWorkout.map((exercise) => (
-            <ExerciseCard
-              key={exercise.id}
-              exercise={exercise}
-              onUpdateSet={handleUpdateSet}
-              onToggleSetComplete={handleToggleSetComplete}
-              onAddSet={handleAddSet}
-              onRemoveExercise={handleRemoveExercise}
-              onRemoveLastSet={handleRemoveExercise}
-            />
-          ))}
-
-          {/* Desktop dashed "Add Exercise" card */}
+        {activeWorkout.length === 0 ? (
+          // Empty state - Full width centered
           <button
             onClick={() => setIsSearchModalOpen(true)}
             className="hidden lg:flex items-center justify-center w-full rounded-2xl font-bold transition-colors"
@@ -429,7 +458,7 @@ export default function LiveLogger() {
               border: "2px dashed #334155",
               color: "#3B82F6",
               backgroundColor: "transparent",
-              minHeight: activeWorkout.length === 0 ? "200px" : "100%",
+              minHeight: "400px",
             }}
             onMouseEnter={(e) =>
               (e.currentTarget.style.backgroundColor = "#1E293B")
@@ -440,12 +469,48 @@ export default function LiveLogger() {
           >
             + Add New Exercise
           </button>
-        </div>
+        ) : (
+          // Active workout - grid layout
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-6">
+            {activeWorkout.map((exercise) => (
+              <ExerciseCard
+                key={exercise.id}
+                exercise={exercise}
+                onUpdateSet={handleUpdateSet}
+                onToggleSetComplete={handleToggleSetComplete}
+                onAddSet={handleAddSet}
+                onRemoveExercise={handleRemoveExercise}
+                onRemoveLastSet={handleRemoveLastSet}
+              />
+            ))}
+
+            {/* Dashed add card alongside existing exercise */}
+            <button
+              onClick={() => setIsSearchModalOpen(true)}
+              className="hidden lg:flex items-center justify-center w-full rounded-2xl font-bold transition-colors"
+              style={{
+                border: "2px dashed #334155",
+                color: "#3B82F6",
+                backgroundColor: "transparent",
+                minHeight: "160px",
+                //   minHeight: activeWorkout.length === 0 ? "200px" : "100%",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#1E293B")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              + Add New Exercise
+            </button>
+          </div>
+        )}
 
         {/* Spacer keeps content above the mobile fixed button */}
         <div className="h-28 lg:hidden" />
       </div>
-
       {/* ── MOBILE FIXED "ADD EXERCISE" BUTTON ── */}
       <div className="fixed bottom-6 left-0 right-0 px-4 z-30 lg:hidden">
         <button
@@ -474,7 +539,6 @@ export default function LiveLogger() {
           Add Exercise
         </button>
       </div>
-
       {/* Exercise search modal — only mounted when open */}
       {isSearchModalOpen && (
         <ExerciseSearch
@@ -482,13 +546,16 @@ export default function LiveLogger() {
           onSelectExercise={handleAddNewExercise}
         />
       )}
-
       {/* Rest timer — slides up when a set is completed */}
       {showRestTimer && (
         <RestTimer
           duration={restDuration}
           onDismiss={() => setShowRestTimer(false)}
         />
+      )}
+      {/** PR celebration model */}
+      {showPRCelebration && (
+        <PRCelebration newPRs={newPRs} onDismiss={handlePRDismiss} />
       )}
     </div>
   );
