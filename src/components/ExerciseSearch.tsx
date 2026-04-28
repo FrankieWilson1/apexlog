@@ -87,6 +87,7 @@ export default function ExerciseSearch({
               muscleGroups: [ex.category?.name || "General"],
               secondaryMuscles: ex.equipment?.map((e: any) => e.name) || [],
               description: englishTranslation?.description || "",
+              category: ex.category?.name || "",
             };
           },
         );

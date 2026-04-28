@@ -43,6 +43,10 @@ import { useAuth } from "../context/useAuth";
 import apiFetch from "../config/apiHelper";
 import RestTimer from "../components/RestTimer";
 import PRCelebration from "../components/PRCelebration";
+import {
+  detectExerciseType,
+  getDefaultTrackedFields,
+} from "../utils/ExerciseTypeDetector";
 
 /**
  * LiveLogger
@@ -80,6 +84,15 @@ export default function LiveLogger() {
     "apexlog_workout_start",
     Date.now(),
   );
+
+  // Add the handler
+  const handleUpdateTrackedFields = (exerciseId: string, fields: string[]) => {
+    setActiveWorkout((prev) =>
+      prev.map((ex) =>
+        ex.id === exerciseId ? { ...ex, trackedFields: fields } : ex,
+      ),
+    );
+  };
 
   /** Derived seconds elapsed — recalculated from the wall clock every second */
   const [secondsElapsed, setSecondsElapsed] = useState(() =>
@@ -126,7 +139,7 @@ export default function LiveLogger() {
    */
   const handleUpdateSet = (
     setId: string,
-    field: "weight" | "reps",
+    field: string,
     value: number | "",
   ) => {
     setActiveWorkout((prev) =>
@@ -198,6 +211,12 @@ export default function LiveLogger() {
   const handleAddNewExercise = async (exerciseDef: ExerciseDefinition) => {
     // Fetch workout history to find previous performance for this exercise
     let previousStr = "-";
+    const exerciseType = detectExerciseType(exerciseDef.name, exerciseDef.category);
+    const defaultFields = getDefaultTrackedFields(
+      exerciseType,
+      exerciseDef.name,
+    );
+
     try {
       const history = await apiFetch("/workouts", token);
       // Search through past workouts for the most recent instance of this exercise.
@@ -222,6 +241,8 @@ export default function LiveLogger() {
       id: `log-${Date.now()}`,
       name: exerciseDef.name,
       muscleGroups: exerciseDef.muscleGroups,
+      type: exerciseType,
+      trackedFields: defaultFields,
       sets: [
         {
           id: `s-new-${Date.now()}`,
@@ -251,15 +272,13 @@ export default function LiveLogger() {
 
     activeWorkout.forEach((exercise) => {
       exercise.sets.forEach((set) => {
-        if (
-          set.isCompleted &&
-          set.weight !== "" &&
-          set.reps !== "" &&
-          Number(set.weight) > 0 &&
-          Number(set.reps) > 0
-        ) {
-          totalVolume += Number(set.weight) * Number(set.reps);
+        if (set.isCompleted) {
           completedSetCount++;
+          // Only add to volume if it's a strenght set
+          if (set.weight !== "" && set.reps !== "" &&
+            Number(set.weight) > 0 && Number(set.reps) > 0) {
+            totalVolume += Number(set.weight) * Number(set.reps);
+          }
         }
       });
     });
@@ -482,6 +501,7 @@ export default function LiveLogger() {
                 onAddSet={handleAddSet}
                 onRemoveExercise={handleRemoveExercise}
                 onRemoveLastSet={handleRemoveLastSet}
+                onUpdateTrackedFields={handleUpdateTrackedFields}
               />
             ))}
 

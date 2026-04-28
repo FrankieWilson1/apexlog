@@ -57,7 +57,11 @@ export default function HistoryCard({ workout, hasPR }: HistoryCardProps) {
         {workout.exercises && workout.exercises.length > 0 && (
           <>
             <span className="text-surface">•</span>
-            <span>{workout.exercises.length} exercises</span>
+            <span>
+              {(workout.exercises?.length ?? 0) === 1
+                ? `${workout.exercises.length} Exercise`
+                : `${workout.exercises.length} Exercises`}
+            </span>
           </>
         )}
       </div>

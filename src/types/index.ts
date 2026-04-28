@@ -12,14 +12,28 @@
 // Workout & Exercise
 // ─────────────────────────────────────────────────────────────────────────────
 
+export type ExerciseType = "strength" | "cardio" | "bodyweight" | "flexibility";
+
 /** A single logged set within an exercise */
 export interface ExerciseSet {
     id: string;
     setNumber: number;
     /** Display string for the previous session's performance e.g. "80kg × 8" */
     previousStr: string;
+
+    // Strength
     weight: number | "";
     reps: number | "";
+
+    // Cardio / Bodyweight / Flexibility (all optional)
+    distance?: number | "";
+    duration?: number | "";
+    pace?: string;   // e.g. "5:00 /km"
+    calories?: number | "";
+    floors?: number | "";
+    laps?: number | "";
+    skips?: number | "";
+
     isCompleted: boolean;
 }
 
@@ -31,11 +45,14 @@ export interface ExerciseDefinition {
     secondaryMuscles?: string[];
     equipment?: string[];
     description?: string;
+    category?: string;
 }
 
 /** An exercise being actively logged — extends definition with sets */
 export interface LoggedExercise extends ExerciseDefinition {
     sets: ExerciseSet[];
+    type: ExerciseType;
+    trackedFields: string[];   // e.g. ["weight", "reps"] or ["duration"]
 }
 
 /** A completed workout session stored in history */
@@ -109,7 +126,7 @@ export interface VolumeChartProps {
 
 export interface SetRowProps {
     set: ExerciseSet;
-    onUpdate: (id: string, field: "weight" | "reps", value: number | "") => void;
+    onUpdate: (id: string, field: string, value: number | "") => void;
     onToggleComplete: (id: string) => void;
 }
 
@@ -124,6 +141,18 @@ export interface ExerciseCardProps {
     onAddSet: (exerciseId: string) => void;
     onRemoveExercise: (exerciseId: string) => void;
     onRemoveLastSet: (exerciseId: string) => void;
+    onUpdateTrackedFields: (exerciseId: string, fields: string[]) => void;
+}
+
+export interface CardioSetRowProps {
+  set: ExerciseSet;
+  setNumber: number;
+  exerciseType: ExerciseType;
+  trackedFields: string[];
+  isFirstRow: boolean; // only first row shows the field selector
+  onUpdate: (setId: string, field: string, value: number | "") => void;
+  onToggleComplete: (setId: string) => void;
+  onUpdateTrackedFields: (fields: string[]) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -146,7 +146,9 @@ export default function WorkoutDetail() {
             <p className="text-2xl font-bold text-text-primary">
               {workout.exercises?.length ?? "—"}
             </p>
-            <p className="text-muted text-xs mt-1">Exercises</p>
+            <p className="text-muted text-xs mt-1">
+              {(workout.exercises?.length ?? 0) === 1 ? "Exercise" : "Exercises"}
+            </p>
           </div>
         </div>
 
@@ -214,7 +216,7 @@ export default function WorkoutDetail() {
                 {/* Per-exercise completion summary */}
                 <p className="text-muted text-xs mt-3 text-right">
                   {ex.sets.filter((s) => s.isCompleted).length} /{" "}
-                  {ex.sets.length} sets completed
+                  {ex.sets.length} {ex.sets.length === 1 ? "set" : "sets"} completed
                 </p>
               </div>
             ))}
@@ -234,7 +236,7 @@ export default function WorkoutDetail() {
         {/* ── FOOTER: overall completion count ── */}
         {totalSets > 0 && (
           <p className="text-center text-muted text-xs mt-6">
-            {completedSets} of {totalSets} total sets completed
+            {completedSets} of {totalSets} total {totalSets === 1 ? "set" : "sets"} completed
           </p>
         )}
       </div>

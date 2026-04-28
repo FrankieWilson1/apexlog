@@ -16,7 +16,8 @@
  */
 
 import { useState } from "react";
-import type { ExerciseCardProps } from "../types";
+import CardioSetRow from "./CardioSetRow";
+import type { ExerciseCardProps, ExerciseType } from "../types";
 import SetRow from "./SetRow";
 import ExerciseDetailsModal from "./ExerciseDetailsModal";
 
@@ -56,12 +57,23 @@ export default function ExerciseCard({
   onAddSet,
   onRemoveExercise,
   onRemoveLastSet,
+  onUpdateTrackedFields,
 }: ExerciseCardProps) {
   /** Controls visibility of the 3-dot overflow dropdown menu */
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   /** Controls visibility of the full Exercise Details modal */
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  // Type badge colours
+  const TYPE_BADGE: Record<ExerciseType, { label: string; color: string }> = {
+    strength: { label: "Strength", color: "#3B82F6" },
+    cardio: { label: "Cardio", color: "#F97316" },
+    bodyweight: { label: "Bodyweight", color: "#10B981" },
+    flexibility: { label: "Flexibility", color: "#8B5CF6" },
+  };
+
+  const badge = TYPE_BADGE[exercise.type || "strength"];
 
   return (
     <div className="bg-card/50 p-5 rounded-3xl border border-surface shadow-lg backdrop-blur-sm flex flex-col gap-3">
@@ -77,6 +89,15 @@ export default function ExerciseCard({
               {exercise.muscleGroups.join(" · ")}
             </p>
           )}
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{
+              backgroundColor: `${badge.color}18`,
+              color: badge.color,
+            }}
+          >
+            {badge.label}
+          </span>
         </div>
 
         {/* 3-dot overflow menu trigger */}
@@ -150,25 +171,43 @@ export default function ExerciseCard({
         )}
       </div>
 
-      {/* ── COLUMN HEADERS for the set table ────────────────────────────── */}
-      <div className="grid grid-cols-[40px_1fr_60px_60px_40px] gap-2 items-center text-xs font-semibold text-muted tracking-wide px-1">
-        <span className="text-center">Set</span>
-        <span>Previous</span>
-        <span className="text-center">Kg</span>
-        <span className="text-center">Reps</span>
-        <span></span>
-      </div>
+      {/* Column headers — only for strength */}
+      {(exercise.type === "strength" || !exercise.type) && (
+        <div className="grid grid-cols-[40px_1fr_60px_60px_40px] gap-2 items-center text-xs font-semibold text-muted tracking-wide px-1">
+          <span className="text-center">Set</span>
+          <span>Previous</span>
+          <span className="text-center">Kg</span>
+          <span className="text-center">Reps</span>
+          <span></span>
+        </div>
+      )}
 
-      {/* ── SET ROWS — one SetRow component per logged set ───────────────── */}
+      {/* Set rows — strength vs cardio/bodyweight/flexibility */}
       <div className="flex flex-col divide-y divide-surface/50">
-        {exercise.sets.map((set) => (
-          <SetRow
-            key={set.id}
-            set={set}
-            onUpdate={onUpdateSet}
-            onToggleComplete={onToggleSetComplete}
-          />
-        ))}
+        {exercise.sets.map((set, index) =>
+          exercise.type === "strength" || !exercise.type ? (
+            <SetRow
+              key={set.id}
+              set={set}
+              onUpdate={onUpdateSet}
+              onToggleComplete={onToggleSetComplete}
+            />
+          ) : (
+            <CardioSetRow
+              key={set.id}
+              set={set}
+              setNumber={set.setNumber}
+              exerciseType={exercise.type}
+              trackedFields={exercise.trackedFields || []}
+              isFirstRow={index === 0}
+              onUpdate={onUpdateSet}
+              onToggleComplete={onToggleSetComplete}
+              onUpdateTrackedFields={(fields) =>
+              onUpdateTrackedFields(exercise.id, fields)
+              }
+            />
+          ),
+        )}
       </div>
 
       {/* ── ADD SET — outlined button, positioned at the bottom of the card */}
